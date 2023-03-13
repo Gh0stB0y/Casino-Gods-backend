@@ -15,7 +15,7 @@ namespace CasinoGodsAPI.Controllers
         {
             _casinoGodsDbContext = CasinoGodsDbContext;
         }
-
+        
         [HttpGet]
         public async Task<IActionResult> GetPlayer()
         {
@@ -30,21 +30,42 @@ namespace CasinoGodsAPI.Controllers
             if ((_casinoGodsDbContext.Players.SingleOrDefault(play => play.username == playerRequest.username) == null) &&
                  _casinoGodsDbContext.Players.SingleOrDefault(play => play.email == playerRequest.email) == null)
             {
-                //dodawanie nowego gracza
-                playerRequest.Id = Guid.NewGuid();
-                await _casinoGodsDbContext.Players.AddAsync(playerRequest);
-                await _casinoGodsDbContext.SaveChangesAsync();
-                return Ok(playerRequest);
-                //
+
+                string message=Player.CheckSignUpCredentials(playerRequest);
+                if (message != "") return BadRequest(message);
+                else
+                {
+                    //dodawanie nowego gracza
+                    playerRequest.Id = Guid.NewGuid();
+                    await _casinoGodsDbContext.Players.AddAsync(playerRequest);
+                    await _casinoGodsDbContext.SaveChangesAsync();
+                    return Ok(playerRequest);
+                }
+               
             }//dalsze sprawdzanie
 
-            else return BadRequest("Username or email already in use");//username or email already in use
 
+            else if ((_casinoGodsDbContext.Players.SingleOrDefault(play => play.username == playerRequest.username) != null) &&
+                 _casinoGodsDbContext.Players.SingleOrDefault(play => play.email == playerRequest.email) == null) 
+            { return BadRequest("Username already in use"); }
+            else if ((_casinoGodsDbContext.Players.SingleOrDefault(play => play.username == playerRequest.username) == null) &&
+                 _casinoGodsDbContext.Players.SingleOrDefault(play => play.email == playerRequest.email) != null)
+            { return BadRequest("Email already in use"); }
+            else return BadRequest("Username and email already in use");//username or email already in use
+        }
 
-
-             
-          
-            //return Ok(playerRequest);
+        [Route("login")]
+        [HttpPost]
+        public async Task<IActionResult> LoginPlayer([FromBody] Player playerRequest)
+        {
+            Console.WriteLine("FUNKCJA WESZLA");
+            Player loggedPlayer = _casinoGodsDbContext.Players.SingleOrDefault(play => play.username == playerRequest.username);
+            if (loggedPlayer == null) return BadRequest("Username not found");
+            else
+            {
+                if (loggedPlayer.password == playerRequest.password) return Ok();
+                else return BadRequest("Password not correct");
+            }
         }
     }
 }

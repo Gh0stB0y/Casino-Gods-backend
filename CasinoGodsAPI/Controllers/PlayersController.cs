@@ -1,7 +1,9 @@
-﻿using CasinoGodsAPI.Data;
+﻿using System;
+using CasinoGodsAPI.Data;
 using CasinoGodsAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 
 namespace CasinoGodsAPI.Controllers
 {
@@ -66,6 +68,22 @@ namespace CasinoGodsAPI.Controllers
                 if (loggedPlayer.password == playerRequest.password) return Ok();
                 else return BadRequest("Password not correct");
             }
+        }
+        [Route("recovery")]
+        [HttpPost]
+        public async Task<IActionResult> recoveryPlayer([FromBody] Player recoveryPlayer) {
+            var playerToRecover=_casinoGodsDbContext.Players.SingleOrDefault(play => play.email == recoveryPlayer.email);
+            if (playerToRecover != null)
+            {
+                string newPass = Player.GetRandomPassword(10);
+                playerToRecover.password = newPass;
+                //zamienic tego playerToRecover z poprzednim uzytkownikiem
+
+                //
+                Player.sendRecoveryEmail(playerToRecover.email, playerToRecover.password);
+                return Ok();
+            }
+            else return BadRequest("Email not found");
         }
     }
 }

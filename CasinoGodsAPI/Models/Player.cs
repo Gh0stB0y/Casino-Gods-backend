@@ -1,6 +1,12 @@
-﻿using Microsoft.VisualBasic;
+﻿using MailKit.Security;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualBasic;
+using MimeKit;
 using System;
 using System.Data.SqlTypes;
+using System.Security.Cryptography;
+using MailKit.Net.Pop3;
+using MailKit.Net.Smtp;
 
 namespace CasinoGodsAPI.Models
 {
@@ -76,6 +82,29 @@ namespace CasinoGodsAPI.Models
                 if (Char.IsLower(character)) { lowerExist = true; break; }
             }
             return lowerExist;
+        }
+        public static string GetRandomPassword(int length)
+        {
+            byte[] rgb = new byte[length];
+            RNGCryptoServiceProvider rngCrypt = new RNGCryptoServiceProvider();
+            rngCrypt.GetBytes(rgb);
+            return Convert.ToBase64String(rgb);
+        }
+
+        public static void sendRecoveryEmail(string email, string newPassword)
+        {
+            var recEmail = new MimeMessage();
+            recEmail.From.Add(MailboxAddress.Parse("kapi38134@wp.pl"));
+            recEmail.To.Add(MailboxAddress.Parse("kacper.a.przybylski@gmail.com"));
+            recEmail.Subject = "Password recovery";
+            recEmail.Body = new TextPart(MimeKit.Text.TextFormat.Html) { Text = "Witaj,\nTwoje haslo tymczasowe to: "+ newPassword +".\nPozdrawiamy,\nZespol Casino Gods"};
+            using (var smtp = new SmtpClient())
+            {
+                smtp.Connect("smtp.wp.pl", 465, SecureSocketOptions.SslOnConnect);
+                smtp.Authenticate("kapi38134@wp.pl", "dorsz1");
+                smtp.Send(recEmail);
+                smtp.Disconnect(true);
+            }
         }
     }
 

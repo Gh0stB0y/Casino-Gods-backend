@@ -4,6 +4,7 @@ using CasinoGodsAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CasinoGodsAPI.Migrations
 {
     [DbContext(typeof(CasinoGodsDbContext))]
-    partial class CasinoGodsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230321191327_ChangePlayerClass")]
+    partial class ChangePlayerClass
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -48,12 +51,6 @@ namespace CasinoGodsAPI.Migrations
 
                     b.Property<int>("loses")
                         .HasColumnType("int");
-
-                    b.Property<byte[]>("passHash")
-                        .HasColumnType("varbinary(max)");
-
-                    b.Property<byte[]>("passSalt")
-                        .HasColumnType("varbinary(max)");
 
                     b.Property<string>("password")
                         .HasColumnType("nvarchar(max)");

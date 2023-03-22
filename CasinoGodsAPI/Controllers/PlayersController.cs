@@ -26,22 +26,30 @@ namespace CasinoGodsAPI.Controllers
             return Ok(player);
         }
         [HttpPost]
-        public async Task<IActionResult> RegisterPlayer([FromBody] Player playerRequest)
+        public async Task<IActionResult> RegisterPlayer([FromBody] PlayerSignUp playerRequest)
         {
             //warunki do spelnienia, unikalny login,unikalny mail,
             if ((_casinoGodsDbContext.Players.SingleOrDefault(play => play.username == playerRequest.username) == null) &&
                  _casinoGodsDbContext.Players.SingleOrDefault(play => play.email == playerRequest.email) == null)
             {
 
-                string message=Player.CheckSignUpCredentials(playerRequest);
+                string message=PlayerSignUp.CheckSignUpCredentials(playerRequest);
                 if (message != "") return BadRequest(message);
                 else
                 {
+                    Player new_player = new Player();
+                    new_player.Id = Guid.NewGuid();
+                    new_player.username = playerRequest.username;
+                    new_player.email = playerRequest.email;
+                    new_player.birthdate= playerRequest.birthdate;
+                    new_player.hashPass(playerRequest.password);
+                    
+                   
                     //dodawanie nowego gracza
-                    playerRequest.Id = Guid.NewGuid();
-                    await _casinoGodsDbContext.Players.AddAsync(playerRequest);
+               
+                    await _casinoGodsDbContext.Players.AddAsync(new_player);
                     await _casinoGodsDbContext.SaveChangesAsync();
-                    return Ok(playerRequest);
+                    return Ok(new_player);
                 }
                
             }//dalsze sprawdzanie
@@ -58,28 +66,40 @@ namespace CasinoGodsAPI.Controllers
 
         [Route("login")]
         [HttpPost]
-        public async Task<IActionResult> LoginPlayer([FromBody] Player playerRequest)
+        public async Task<IActionResult> LoginPlayer([FromBody] PlayerSignIn playerRequest)
         {
-            Console.WriteLine("FUNKCJA WESZLA");
             Player loggedPlayer = _casinoGodsDbContext.Players.SingleOrDefault(play => play.username == playerRequest.username);
             if (loggedPlayer == null) return BadRequest("Username not found");
             else
             {
-                if (loggedPlayer.password == playerRequest.password) return Ok();
-                else return BadRequest("Password not correct");
+                if (!CheckPassword(playerRequest.password, loggedPlayer.passHash, loggedPlayer.passSalt)) return BadRequest("Password not correct");
+                else return Ok();
             }
         }
+        private bool CheckPassword(string password,byte[] passHash, byte[] passSalt)
+        {
+            using (var hmac = new HMACSHA512(passSalt))
+            {
+                var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                return computedHash.SequenceEqual(passHash);
+
+            }
+        }
+
+
+        [HttpPut]
         [Route("recovery")]
-        [HttpPost]
-        public async Task<IActionResult> recoveryPlayer([FromBody] Player recoveryPlayer) {
-            var playerToRecover=_casinoGodsDbContext.Players.SingleOrDefault(play => play.email == recoveryPlayer.email);
+       
+        public async Task<IActionResult> recoveryPlayer([FromBody] string email ) {
+            
+            var playerToRecover=_casinoGodsDbContext.Players.SingleOrDefault(play => play.email == email);
             if (playerToRecover != null)
             {
                 string newPass = Player.GetRandomPassword(10);
                 playerToRecover.password = newPass;
-                //zamienic tego playerToRecover z poprzednim uzytkownikiem
-
-                //
+                
+                Console.WriteLine(playerToRecover.password);
+                await _casinoGodsDbContext.SaveChangesAsync();
                 Player.sendRecoveryEmail(playerToRecover.email, playerToRecover.password);
                 return Ok();
             }

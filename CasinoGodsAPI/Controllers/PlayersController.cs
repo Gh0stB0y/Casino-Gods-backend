@@ -4,21 +4,24 @@ using CasinoGodsAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CasinoGodsAPI.Controllers
 {
+
     [ApiController]
     [Route("api/[controller]")]
     public class PlayersController : Controller
     {
         private readonly CasinoGodsDbContext _casinoGodsDbContext;
-
-        public PlayersController(CasinoGodsDbContext CasinoGodsDbContext)
+        private readonly IConfiguration _configuration;
+        public PlayersController(CasinoGodsDbContext CasinoGodsDbContext,IConfiguration configuration)
         {
             _casinoGodsDbContext = CasinoGodsDbContext;
+            _configuration = configuration;
         }
         
-        [HttpGet]
+        [HttpGet,Authorize(Roles ="Admin")]
         public async Task<IActionResult> GetPlayer()
         {
             //ta funkcja mowi do bazy danych DAJ graczy
@@ -73,8 +76,12 @@ namespace CasinoGodsAPI.Controllers
             else
             {
                 if (!CheckPassword(playerRequest.password, loggedPlayer.passHash, loggedPlayer.passSalt)) return BadRequest("Password not correct");
-                else return Ok();
+                else
+                {
+                    return Ok(playerRequest.CreateToken(playerRequest.username,_configuration));
+                }
             }
+            
         }
         private bool CheckPassword(string password,byte[] passHash, byte[] passSalt)
         {
@@ -85,11 +92,9 @@ namespace CasinoGodsAPI.Controllers
 
             }
         }
-
-
-        [HttpPut]
         [Route("recovery")]
-       
+        [HttpPut]
+      
         public async Task<IActionResult> recoveryPlayer([FromBody] string email ) {
             
             var playerToRecover=_casinoGodsDbContext.Players.SingleOrDefault(play => play.email == email);

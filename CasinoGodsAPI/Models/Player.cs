@@ -7,6 +7,12 @@ using System.Data.SqlTypes;
 using System.Security.Cryptography;
 using MailKit.Net.Pop3;
 using MailKit.Net.Smtp;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text.Json;
+using Microsoft.AspNetCore.Identity;
 
 namespace CasinoGodsAPI.Models
 {
@@ -144,10 +150,25 @@ namespace CasinoGodsAPI.Models
     {
         public string username { get; set; } = string.Empty;
         public string password { get; set; } = string.Empty;
-        public string MAC { get; set; }= string.Empty;
+        public string CreateToken(string uname,IConfiguration configuration)
+        {
+            List<Claim> claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, uname),
+                new Claim(ClaimTypes.Role, "Player"),
+            };
+            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(configuration.GetSection("AppSettings:Token").Value));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+            var token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(5),
+                signingCredentials: credentials
+                ) ;
+            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+            string jsonString = JsonSerializer.Serialize(jwt);
 
-        
+            return jsonString;
+        }
     }
-
 
 }

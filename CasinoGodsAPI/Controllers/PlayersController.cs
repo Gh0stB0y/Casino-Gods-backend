@@ -47,12 +47,35 @@ namespace CasinoGodsAPI.Controllers
                     new_player.birthdate= playerRequest.birthdate;
                     new_player.hashPass(playerRequest.password);
                     
-                   
                     //dodawanie nowego gracza
-               
                     await _casinoGodsDbContext.Players.AddAsync(new_player);
+                    //
+                   
+                    var gameslist = await _casinoGodsDbContext.GamesList.ToListAsync();
+                    foreach (var gameNameFromTable in gameslist)
+                    {
+                        GamePlusPlayer gamePlusPlayer = new GamePlusPlayer();
+                        gamePlusPlayer.gameName = gameNameFromTable;
+                        gamePlusPlayer.player = new_player;
+                       
+                        await _casinoGodsDbContext.GamePlusPlayersTable.AddAsync(gamePlusPlayer);
+
+
+                    }
+                    
+                   var playerGamelist = await _casinoGodsDbContext.GamePlusPlayersTable.Where(c => c.player == new_player).ToListAsync();
+               
+                   /* 
+                   foreach (var Record in playerGamelist)
+                   {
+                       var gamesStatsRecord = new GameStats();
+                       gamesStatsRecord.gamePlusPlayer = Record;
+                       await _casinoGodsDbContext.GamesStats.AddAsync(gamesStatsRecord);
+                   }
+                    */
                     await _casinoGodsDbContext.SaveChangesAsync();
-                    return Ok(new_player);
+                    //return Ok(new_player);
+                    return Ok(playerGamelist);
                 }
                
             }//dalsze sprawdzanie
@@ -71,7 +94,7 @@ namespace CasinoGodsAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> LoginPlayer([FromBody] PlayerSignIn playerRequest)
         {
-            Player loggedPlayer = _casinoGodsDbContext.Players.SingleOrDefault(play => play.username == playerRequest.username);
+            Player loggedPlayer = await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.username == playerRequest.username);
             if (loggedPlayer == null) return BadRequest("Username not found");
             else
             {

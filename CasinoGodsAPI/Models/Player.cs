@@ -13,6 +13,9 @@ using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CasinoGodsAPI.Models
 {
@@ -25,15 +28,16 @@ namespace CasinoGodsAPI.Models
         public int bankroll { get; set; } = 5000;
         public int profit { get; set; } = 0;
         public DateTime birthdate { get; set; }
-
-        public int gamesPlayed { get; set; } = 0;
-        public int wins { get ; set; }= 0;
-        public int loses { get; set; } = 0;
-        public int draws { get; set; } = 0;
-        public int BJ { get; set; } = 0;
-
         public byte[] passSalt { get; set; }
         public byte[] passHash { get; set; }
+
+        //public int gamesPlayed { get; set; } = 0;
+        //public int wins { get ; set; }= 0;
+        //public int loses { get; set; } = 0;
+        //public int draws { get; set; } = 0;
+        //public int BJ { get; set; } = 0;
+
+        
 
 
         public void hashPass(string password)
@@ -171,4 +175,31 @@ namespace CasinoGodsAPI.Models
         }
     }
 
+    public class GamesDatabase
+    {
+        [Key]
+        public string Name { get; set; }
+    }
+    public class GamePlusPlayer
+    {
+        [Key]
+        public int Id { get; set; }
+        public GamesDatabase gameName { get; set; }
+        public Player player { get; set; }
+    }
+    /*
+    public class GameStats
+    {
+        public GamePlusPlayer Id { get; set; }
+        //public GamePlusPlayer gamePlusPlayer { get; set; }
+        public int gamesPlayed { get; set; } = 0;
+        public int wins { get; set; } = 0;
+        public int loses { get; set; } = 0;
+        public int draws { get; set; } = 0;
+        public float winratio { get; set; } = 0;
+        public float profit { get; set; } = 0;
+
+
+    }
+    */
 }

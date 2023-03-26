@@ -4,6 +4,7 @@ using CasinoGodsAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CasinoGodsAPI.Migrations
 {
     [DbContext(typeof(CasinoGodsDbContext))]
-    partial class CasinoGodsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230326124046_table2")]
+    partial class table2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,29 +24,6 @@ namespace CasinoGodsAPI.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("CasinoGodsAPI.Models.GamePlusPlayer", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("gameNameName")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<Guid?>("playerId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("gameNameName");
-
-                    b.HasIndex("playerId");
-
-                    b.ToTable("GamePlusPlayersTable");
-                });
 
             modelBuilder.Entity("CasinoGodsAPI.Models.GamesDatabase", b =>
                 {
@@ -88,21 +68,6 @@ namespace CasinoGodsAPI.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Players");
-                });
-
-            modelBuilder.Entity("CasinoGodsAPI.Models.GamePlusPlayer", b =>
-                {
-                    b.HasOne("CasinoGodsAPI.Models.GamesDatabase", "gameName")
-                        .WithMany()
-                        .HasForeignKey("gameNameName");
-
-                    b.HasOne("CasinoGodsAPI.Models.Player", "player")
-                        .WithMany()
-                        .HasForeignKey("playerId");
-
-                    b.Navigation("gameName");
-
-                    b.Navigation("player");
                 });
 #pragma warning restore 612, 618
         }

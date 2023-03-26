@@ -1,21 +1,14 @@
 ﻿using MailKit.Security;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualBasic;
 using MimeKit;
-using System;
-using System.Data.SqlTypes;
 using System.Security.Cryptography;
-using MailKit.Net.Pop3;
 using MailKit.Net.Smtp;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
-using Microsoft.AspNetCore.Identity;
+
 using System.ComponentModel.DataAnnotations;
-using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations.Schema;
+
 
 namespace CasinoGodsAPI.Models
 {
@@ -31,12 +24,9 @@ namespace CasinoGodsAPI.Models
         public byte[] passSalt { get; set; }
         public byte[] passHash { get; set; }
 
-        //public int gamesPlayed { get; set; } = 0;
-        //public int wins { get ; set; }= 0;
-        //public int loses { get; set; } = 0;
-        //public int draws { get; set; } = 0;
-        //public int BJ { get; set; } = 0;
-
+        public string RefreshToken { get; set; } = string.Empty;
+        public DateTime jwtCreated { get; set; }
+        public DateTime jwtExpires { get; set; }
         
 
 
@@ -72,7 +62,25 @@ namespace CasinoGodsAPI.Models
                 smtp.Disconnect(true);
             }
         }
+        public string CreateToken(string uname, IConfiguration configuration)
+        {
+            List<Claim> claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, uname),
+                new Claim(ClaimTypes.Role, "Player"),
+            };
+            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(configuration.GetSection("AppSettings:Token").Value));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+            var token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(5),
+                signingCredentials: credentials
+                );
+            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+            //string jsonString = JsonSerializer.Serialize(jwt);
 
+            return jwt;
+        }
     }
 
 
@@ -154,26 +162,16 @@ namespace CasinoGodsAPI.Models
     {
         public string username { get; set; } = string.Empty;
         public string password { get; set; } = string.Empty;
-        public string CreateToken(string uname,IConfiguration configuration)
-        {
-            List<Claim> claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, uname),
-                new Claim(ClaimTypes.Role, "Player"),
-            };
-            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(configuration.GetSection("AppSettings:Token").Value));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
-            var token = new JwtSecurityToken(
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(5),
-                signingCredentials: credentials
-                ) ;
-            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
-            string jsonString = JsonSerializer.Serialize(jwt);
-
-            return jsonString;
-        }
+       
     }
+
+    public class RefreshToken
+    {
+        public string Token { get; set; }
+        public DateTime Expires { get; set; }
+
+    }
+
 
     public class GamesDatabase
     {
@@ -182,16 +180,9 @@ namespace CasinoGodsAPI.Models
     }
     public class GamePlusPlayer
     {
-        [Key]
         public int Id { get; set; }
         public GamesDatabase gameName { get; set; }
         public Player player { get; set; }
-    }
-    /*
-    public class GameStats
-    {
-        public GamePlusPlayer Id { get; set; }
-        //public GamePlusPlayer gamePlusPlayer { get; set; }
         public int gamesPlayed { get; set; } = 0;
         public int wins { get; set; } = 0;
         public int loses { get; set; } = 0;
@@ -199,7 +190,6 @@ namespace CasinoGodsAPI.Models
         public float winratio { get; set; } = 0;
         public float profit { get; set; } = 0;
 
-
     }
-    */
+
 }

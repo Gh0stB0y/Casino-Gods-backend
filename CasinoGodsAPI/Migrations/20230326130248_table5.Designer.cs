@@ -4,6 +4,7 @@ using CasinoGodsAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CasinoGodsAPI.Migrations
 {
     [DbContext(typeof(CasinoGodsDbContext))]
-    partial class CasinoGodsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230326130248_table5")]
+    partial class table5
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -79,9 +82,6 @@ namespace CasinoGodsAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("RefreshToken")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("bankroll")
                         .HasColumnType("int");
 
@@ -90,12 +90,6 @@ namespace CasinoGodsAPI.Migrations
 
                     b.Property<string>("email")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("jwtCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("jwtExpires")
-                        .HasColumnType("datetime2");
 
                     b.Property<byte[]>("passHash")
                         .HasColumnType("varbinary(max)");

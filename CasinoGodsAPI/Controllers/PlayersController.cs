@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.CookiePolicy;
+using CasinoGodsAPI.Migrations;
 
 namespace CasinoGodsAPI.Controllers
 {
@@ -15,17 +17,17 @@ namespace CasinoGodsAPI.Controllers
     {
         private readonly CasinoGodsDbContext _casinoGodsDbContext;
         private readonly IConfiguration _configuration;
-        public PlayersController(CasinoGodsDbContext CasinoGodsDbContext,IConfiguration configuration)
+        public PlayersController(CasinoGodsDbContext CasinoGodsDbContext, IConfiguration configuration)
         {
             _casinoGodsDbContext = CasinoGodsDbContext;
             _configuration = configuration;
         }
-        
-        [HttpGet,Authorize(Roles ="Admin")]
+
+        [HttpGet, Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetPlayer()
         {
             //ta funkcja mowi do bazy danych DAJ graczy
-          var player= await _casinoGodsDbContext.Players.ToListAsync();
+            var player = await _casinoGodsDbContext.Players.ToListAsync();
             return Ok(player);
         }
         [HttpPost]
@@ -36,7 +38,7 @@ namespace CasinoGodsAPI.Controllers
                  _casinoGodsDbContext.Players.SingleOrDefault(play => play.email == playerRequest.email) == null)
             {
 
-                string message=PlayerSignUp.CheckSignUpCredentials(playerRequest);
+                string message = PlayerSignUp.CheckSignUpCredentials(playerRequest);
                 if (message != "") return BadRequest(message);
                 else
                 {
@@ -44,45 +46,35 @@ namespace CasinoGodsAPI.Controllers
                     new_player.Id = Guid.NewGuid();
                     new_player.username = playerRequest.username;
                     new_player.email = playerRequest.email;
-                    new_player.birthdate= playerRequest.birthdate;
+                    new_player.birthdate = playerRequest.birthdate;
                     new_player.hashPass(playerRequest.password);
-                    
+
                     //dodawanie nowego gracza
                     await _casinoGodsDbContext.Players.AddAsync(new_player);
                     //
-                   
+
                     var gameslist = await _casinoGodsDbContext.GamesList.ToListAsync();
                     foreach (var gameNameFromTable in gameslist)
                     {
                         GamePlusPlayer gamePlusPlayer = new GamePlusPlayer();
                         gamePlusPlayer.gameName = gameNameFromTable;
                         gamePlusPlayer.player = new_player;
-                       
+
                         await _casinoGodsDbContext.GamePlusPlayersTable.AddAsync(gamePlusPlayer);
-
-
                     }
-                    
-                   var playerGamelist = await _casinoGodsDbContext.GamePlusPlayersTable.Where(c => c.player == new_player).ToListAsync();
-               
-                   /* 
-                   foreach (var Record in playerGamelist)
-                   {
-                       var gamesStatsRecord = new GameStats();
-                       gamesStatsRecord.gamePlusPlayer = Record;
-                       await _casinoGodsDbContext.GamesStats.AddAsync(gamesStatsRecord);
-                   }
-                    */
+
+                    var playerGamelist = await _casinoGodsDbContext.GamePlusPlayersTable.Where(c => c.player == new_player).ToListAsync();
+
                     await _casinoGodsDbContext.SaveChangesAsync();
-                    //return Ok(new_player);
-                    return Ok(playerGamelist);
+                    return Ok(new_player);
+
                 }
-               
+
             }//dalsze sprawdzanie
 
 
             else if ((_casinoGodsDbContext.Players.SingleOrDefault(play => play.username == playerRequest.username) != null) &&
-                 _casinoGodsDbContext.Players.SingleOrDefault(play => play.email == playerRequest.email) == null) 
+                 _casinoGodsDbContext.Players.SingleOrDefault(play => play.email == playerRequest.email) == null)
             { return BadRequest("Username already in use"); }
             else if ((_casinoGodsDbContext.Players.SingleOrDefault(play => play.username == playerRequest.username) == null) &&
                  _casinoGodsDbContext.Players.SingleOrDefault(play => play.email == playerRequest.email) != null)
@@ -91,7 +83,7 @@ namespace CasinoGodsAPI.Controllers
         }
 
         [Route("login")]
-        [HttpPost]
+        [HttpPut]
         public async Task<IActionResult> LoginPlayer([FromBody] PlayerSignIn playerRequest)
         {
             Player loggedPlayer = await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.username == playerRequest.username);
@@ -101,12 +93,29 @@ namespace CasinoGodsAPI.Controllers
                 if (!CheckPassword(playerRequest.password, loggedPlayer.passHash, loggedPlayer.passSalt)) return BadRequest("Password not correct");
                 else
                 {
-                    return Ok(playerRequest.CreateToken(playerRequest.username,_configuration));
+                    string jwt = loggedPlayer.CreateToken(playerRequest.username, _configuration);
+                    var refreshToken = GetRefreshToken(jwt);
+                    SetRefreshToken(refreshToken, loggedPlayer);
+                    await _casinoGodsDbContext.SaveChangesAsync();
+                    return Ok(jwt);
                 }
             }
-            
         }
-        private bool CheckPassword(string password,byte[] passHash, byte[] passSalt)
+        private RefreshToken GetRefreshToken(string jwt)
+        {
+            var refreshToken = new RefreshToken
+            {
+                Token = jwt,
+                Expires = DateTime.Now.AddMinutes(5)
+            };
+            return refreshToken;
+        }
+        private void SetRefreshToken(RefreshToken newRefreshToken, Player loggedPlayer)
+        {
+            loggedPlayer.RefreshToken = newRefreshToken.Token;
+            loggedPlayer.jwtExpires = newRefreshToken.Expires;
+        }
+        private bool CheckPassword(string password, byte[] passHash, byte[] passSalt)
         {
             using (var hmac = new HMACSHA512(passSalt))
             {
@@ -115,6 +124,32 @@ namespace CasinoGodsAPI.Controllers
 
             }
         }
+
+        [HttpPut("refresh-token")]
+        public async Task<ActionResult<string>> RefreshToken(string sentJwt)
+        {
+            string jwt=string.Empty;
+            Player loggedPlayer = await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.RefreshToken == sentJwt);
+            if (loggedPlayer == null) { return Unauthorized("Wrong JWT"); }
+
+            else if (loggedPlayer.jwtExpires < DateTime.Now)
+            {
+                loggedPlayer.RefreshToken = null;
+                await _casinoGodsDbContext.SaveChangesAsync();
+                return Unauthorized("JWT expired,log in again");
+            }
+            else
+            {
+                jwt = loggedPlayer.CreateToken(loggedPlayer.username, _configuration);
+                var refreshToken = GetRefreshToken(jwt);
+                SetRefreshToken(refreshToken, loggedPlayer);
+                await _casinoGodsDbContext.SaveChangesAsync();
+            }
+            
+
+            return Ok(jwt);
+        }
+
         [Route("recovery")]
         [HttpPut]
       

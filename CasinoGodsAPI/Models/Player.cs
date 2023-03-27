@@ -24,9 +24,8 @@ namespace CasinoGodsAPI.Models
         public byte[] passSalt { get; set; }
         public byte[] passHash { get; set; }
 
-        public string RefreshToken { get; set; } = string.Empty;
-        public DateTime jwtCreated { get; set; }
-        public DateTime jwtExpires { get; set; }
+        //public string RefreshToken { get; set; } = string.Empty;
+        //public DateTime jwtExpires { get; set; }
         
 
 
@@ -163,33 +162,6 @@ namespace CasinoGodsAPI.Models
         public string username { get; set; } = string.Empty;
         public string password { get; set; } = string.Empty;
        
-    }
-
-    public class RefreshToken
-    {
-        public string Token { get; set; }
-        public DateTime Expires { get; set; }
-
-    }
-
-
-    public class GamesDatabase
-    {
-        [Key]
-        public string Name { get; set; }
-    }
-    public class GamePlusPlayer
-    {
-        public int Id { get; set; }
-        public GamesDatabase gameName { get; set; }
-        public Player player { get; set; }
-        public int gamesPlayed { get; set; } = 0;
-        public int wins { get; set; } = 0;
-        public int loses { get; set; } = 0;
-        public int draws { get; set; } = 0;
-        public float winratio { get; set; } = 0;
-        public float profit { get; set; } = 0;
-
     }
 
 }

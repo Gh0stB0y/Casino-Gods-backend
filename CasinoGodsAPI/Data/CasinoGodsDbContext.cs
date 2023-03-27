@@ -11,6 +11,6 @@ namespace CasinoGodsAPI.Data
         public DbSet<Player> Players { get; set; }
         public DbSet<GamesDatabase> GamesList { get; set; }
         public DbSet<GamePlusPlayer> GamePlusPlayersTable{ get; set; }
-        
+        public DbSet<ActivePlayers> ActivePlayersTable { get; set; }
     }
 }

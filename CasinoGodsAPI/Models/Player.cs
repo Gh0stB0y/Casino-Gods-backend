@@ -23,12 +23,7 @@ namespace CasinoGodsAPI.Models
         public DateTime birthdate { get; set; }
         public byte[] passSalt { get; set; }
         public byte[] passHash { get; set; }
-
-        //public string RefreshToken { get; set; } = string.Empty;
-        //public DateTime jwtExpires { get; set; }
-        
-
-
+      
         public void hashPass(string password)
         {
             using (var hmac = new HMACSHA512())

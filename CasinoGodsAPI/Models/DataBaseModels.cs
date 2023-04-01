@@ -69,5 +69,4 @@ namespace CasinoGodsAPI.Models
 
 
 
-
 }

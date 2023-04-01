@@ -23,7 +23,7 @@ namespace CasinoGodsAPI.Models
         public DateTime birthdate { get; set; }
         public byte[] passSalt { get; set; }
         public byte[] passHash { get; set; }
-      
+
         public void hashPass(string password)
         {
             using (var hmac = new HMACSHA512())
@@ -46,7 +46,7 @@ namespace CasinoGodsAPI.Models
             recEmail.From.Add(MailboxAddress.Parse("kapi38134@wp.pl"));
             recEmail.To.Add(MailboxAddress.Parse("kacper.a.przybylski@gmail.com"));
             recEmail.Subject = "Password recovery";
-            recEmail.Body = new TextPart(MimeKit.Text.TextFormat.Html) { Text = "<p>Witaj,</p><p>Twoje haslo tymczasowe to: " + newPassword +".</p><p>Pozdrawiamy,</p><p>Zespol Casino Gods</p>"};
+            recEmail.Body = new TextPart(MimeKit.Text.TextFormat.Html) { Text = "<p>Witaj,</p><p>Twoje haslo tymczasowe to: " + newPassword + ".</p><p>Pozdrawiamy,</p><p>Zespol Casino Gods</p>" };
 
             using (var smtp = new SmtpClient())
             {
@@ -152,11 +152,25 @@ namespace CasinoGodsAPI.Models
         }
     }
 
-    public class PlayerSignIn 
+    public class PlayerSignIn
     {
         public string username { get; set; } = string.Empty;
         public string password { get; set; } = string.Empty;
-       
-    }
 
+    }
+    public class JwtClass
+    {
+        public string jwtString { get; set; } = string.Empty;
+    }
+    public class EmailRecovery
+    {
+        public string emailRec { get; set; } = string.Empty;
+    }
+    public class ActivePlayerDTO
+    {
+        public string username { get; set; } = string.Empty;
+        public int bankroll { get; set; } = 0;
+        public int profit { get; set; } = 0;
+        public string jwt { get; set; } = string.Empty;
+    }
 }

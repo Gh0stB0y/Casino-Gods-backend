@@ -1,4 +1,5 @@
-﻿using CasinoGodsAPI.Models;
+﻿using CasinoGodsAPI.BlackjackTableModel;
+using CasinoGodsAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace CasinoGodsAPI.Data
@@ -12,5 +13,13 @@ namespace CasinoGodsAPI.Data
         public DbSet<GamesDatabase> GamesList { get; set; }
         public DbSet<GamePlusPlayer> GamePlusPlayersTable{ get; set; }
         public DbSet<ActivePlayers> ActivePlayersTable { get; set; }
+        public DbSet<BlackjackTableDatabase> BlackjackTables { get; set; }
+        public DbSet<Dealer> Dealers { get; set; }
+
+
+        public List<BlackjackTable> ActiveBlackjackTable { get; set; }
+
+
+
     }
 }

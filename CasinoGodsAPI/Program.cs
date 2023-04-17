@@ -55,4 +55,12 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+Init();
+
 app.Run();
+
+void Init()
+{
+   
+
+}

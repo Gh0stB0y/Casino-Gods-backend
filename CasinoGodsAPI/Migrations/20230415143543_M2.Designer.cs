@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CasinoGodsAPI.Migrations
 {
     [DbContext(typeof(CasinoGodsDbContext))]
-    [Migration("20230327185128_ActivePlayersTable")]
-    partial class ActivePlayersTable
+    [Migration("20230415143543_M2")]
+    partial class M2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,53 @@ namespace CasinoGodsAPI.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("CasinoGodsAPI.BlackjackTableModel.BlackjackTableDatabase", b =>
+                {
+                    b.Property<string>("name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("actionTime")
+                        .HasColumnType("int");
+
+                    b.Property<int>("betTime")
+                        .HasColumnType("int");
+
+                    b.Property<int>("decks")
+                        .HasColumnType("int");
+
+                    b.Property<int>("maxBet")
+                        .HasColumnType("int");
+
+                    b.Property<int>("minBet")
+                        .HasColumnType("int");
+
+                    b.Property<int>("seatsCount")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("sidebet1")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("sidebet2")
+                        .HasColumnType("bit");
+
+                    b.HasKey("name");
+
+                    b.ToTable("BlackjackTables");
+                });
+
+            modelBuilder.Entity("CasinoGodsAPI.BlackjackTableModel.Dealer", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<float>("profit")
+                        .HasColumnType("real");
+
+                    b.HasKey("Name");
+
+                    b.ToTable("Dealers");
+                });
 
             modelBuilder.Entity("CasinoGodsAPI.Models.ActivePlayers", b =>
                 {

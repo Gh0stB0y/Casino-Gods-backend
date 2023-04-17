@@ -14,6 +14,7 @@ namespace CasinoGodsAPI.Models
 {
     public class Player
     {
+        [Key]
         public Guid Id { get; set; }
         public string username { get; set; } = string.Empty;
         public string email { get; set; } = string.Empty;

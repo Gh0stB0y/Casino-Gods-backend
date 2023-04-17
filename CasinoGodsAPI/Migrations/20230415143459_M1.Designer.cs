@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CasinoGodsAPI.Migrations
 {
     [DbContext(typeof(CasinoGodsDbContext))]
-    [Migration("20230326124257_table3")]
-    partial class table3
+    [Migration("20230415143459_M1")]
+    partial class M1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,6 +25,73 @@ namespace CasinoGodsAPI.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("CasinoGodsAPI.BlackjackTableModel.BlackjackTableDatabase", b =>
+                {
+                    b.Property<int>("actionTime")
+                        .HasColumnType("int");
+
+                    b.Property<int>("betTime")
+                        .HasColumnType("int");
+
+                    b.Property<int>("decks")
+                        .HasColumnType("int");
+
+                    b.Property<int>("maxBet")
+                        .HasColumnType("int");
+
+                    b.Property<int>("minBet")
+                        .HasColumnType("int");
+
+                    b.Property<string>("name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("seatsCount")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("sidebet1")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("sidebet2")
+                        .HasColumnType("bit");
+
+                    b.ToTable("BlackjackTables");
+                });
+
+            modelBuilder.Entity("CasinoGodsAPI.BlackjackTableModel.Dealer", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<float>("profit")
+                        .HasColumnType("real");
+
+                    b.HasKey("Name");
+
+                    b.ToTable("Dealers");
+                });
+
+            modelBuilder.Entity("CasinoGodsAPI.Models.ActivePlayers", b =>
+                {
+                    b.Property<string>("username")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("bankroll")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("jwtExpires")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("profit")
+                        .HasColumnType("int");
+
+                    b.HasKey("username");
+
+                    b.ToTable("ActivePlayersTable");
+                });
+
             modelBuilder.Entity("CasinoGodsAPI.Models.GamePlusPlayer", b =>
                 {
                     b.Property<int>("Id")
@@ -33,11 +100,29 @@ namespace CasinoGodsAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("draws")
+                        .HasColumnType("int");
+
                     b.Property<string>("gameNameName")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int>("gamesPlayed")
+                        .HasColumnType("int");
+
+                    b.Property<int>("loses")
+                        .HasColumnType("int");
+
                     b.Property<Guid?>("playerId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<float>("profit")
+                        .HasColumnType("real");
+
+                    b.Property<float>("winratio")
+                        .HasColumnType("real");
+
+                    b.Property<int>("wins")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

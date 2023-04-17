@@ -22,6 +22,62 @@ namespace CasinoGodsAPI.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("CasinoGodsAPI.BlackjackTableModel.BlackjackTableDatabase", b =>
+                {
+                    b.Property<string>("name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("actionTime")
+                        .HasColumnType("int");
+
+                    b.Property<int>("betTime")
+                        .HasColumnType("int");
+
+                    b.Property<int>("decks")
+                        .HasColumnType("int");
+
+                    b.Property<int>("maxBet")
+                        .HasColumnType("int");
+
+                    b.Property<int>("minBet")
+                        .HasColumnType("int");
+
+                    b.Property<int>("seatsCount")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("sidebet1")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("sidebet2")
+                        .HasColumnType("bit");
+
+                    b.HasKey("name");
+
+                    b.ToTable("BlackjackTables");
+                });
+
+            modelBuilder.Entity("CasinoGodsAPI.BlackjackTableModel.Dealer", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("active")
+                        .HasColumnType("bit");
+
+                    b.Property<float>("profit")
+                        .HasColumnType("real");
+
+                    b.HasKey("ID");
+
+                    b.ToTable("Dealers");
+                });
+
             modelBuilder.Entity("CasinoGodsAPI.Models.ActivePlayers", b =>
                 {
                     b.Property<string>("username")

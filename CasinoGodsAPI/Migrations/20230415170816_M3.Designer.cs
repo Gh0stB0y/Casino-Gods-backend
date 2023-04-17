@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CasinoGodsAPI.Migrations
 {
     [DbContext(typeof(CasinoGodsDbContext))]
-    [Migration("20230326161139_jwt")]
-    partial class jwt
+    [Migration("20230415170816_M3")]
+    partial class M3
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,78 @@ namespace CasinoGodsAPI.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("CasinoGodsAPI.BlackjackTableModel.BlackjackTableDatabase", b =>
+                {
+                    b.Property<string>("name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("actionTime")
+                        .HasColumnType("int");
+
+                    b.Property<int>("betTime")
+                        .HasColumnType("int");
+
+                    b.Property<int>("decks")
+                        .HasColumnType("int");
+
+                    b.Property<int>("maxBet")
+                        .HasColumnType("int");
+
+                    b.Property<int>("minBet")
+                        .HasColumnType("int");
+
+                    b.Property<int>("seatsCount")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("sidebet1")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("sidebet2")
+                        .HasColumnType("bit");
+
+                    b.HasKey("name");
+
+                    b.ToTable("BlackjackTables");
+                });
+
+            modelBuilder.Entity("CasinoGodsAPI.BlackjackTableModel.Dealer", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("active")
+                        .HasColumnType("bit");
+
+                    b.Property<float>("profit")
+                        .HasColumnType("real");
+
+                    b.HasKey("Name");
+
+                    b.ToTable("Dealers");
+                });
+
+            modelBuilder.Entity("CasinoGodsAPI.Models.ActivePlayers", b =>
+                {
+                    b.Property<string>("username")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("bankroll")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("jwtExpires")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("profit")
+                        .HasColumnType("int");
+
+                    b.HasKey("username");
+
+                    b.ToTable("ActivePlayersTable");
+                });
 
             modelBuilder.Entity("CasinoGodsAPI.Models.GamePlusPlayer", b =>
                 {
@@ -82,9 +154,6 @@ namespace CasinoGodsAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("RefreshToken")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("bankroll")
                         .HasColumnType("int");
 
@@ -93,12 +162,6 @@ namespace CasinoGodsAPI.Migrations
 
                     b.Property<string>("email")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("jwtCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("jwtExpires")
-                        .HasColumnType("datetime2");
 
                     b.Property<byte[]>("passHash")
                         .HasColumnType("varbinary(max)");

@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.CookiePolicy;
 using CasinoGodsAPI.Migrations;
+using CasinoGodsAPI.BlackjackTableModel;
 
 namespace CasinoGodsAPI.Controllers
 {
@@ -24,13 +25,7 @@ namespace CasinoGodsAPI.Controllers
         }
 
 
-        [HttpGet, Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetPlayer()
-        {
-            //ta funkcja mowi do bazy danych DAJ graczy
-            var player = await _casinoGodsDbContext.Players.ToListAsync();
-            return Ok(player);
-        }
+        [Route("register")]
         [HttpPost]
         public async Task<IActionResult> RegisterPlayer([FromBody] PlayerSignUp playerRequest)
         {
@@ -86,23 +81,24 @@ namespace CasinoGodsAPI.Controllers
         [Route("login")]
         [HttpPost]
         public async Task<IActionResult> LoginPlayer([FromBody] PlayerSignIn playerRequest)
-        {   
-                Player loggedPlayer = await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.username == playerRequest.username);
-                if (loggedPlayer == null) return BadRequest("Username not found");
+        {
+            Player loggedPlayer = await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.username == playerRequest.username);
+            if (loggedPlayer == null) return BadRequest("Username not found");
+            else
+            {
+                if (!CheckPassword(playerRequest.password, loggedPlayer.passHash, loggedPlayer.passSalt)) return BadRequest("Password not correct");
                 else
                 {
-                    if (!CheckPassword(playerRequest.password, loggedPlayer.passHash, loggedPlayer.passSalt)) return BadRequest("Password not correct");
-                    else
+                    var activePlayerCheck = await _casinoGodsDbContext.ActivePlayersTable.SingleOrDefaultAsync(play => play.username == playerRequest.username);
+                    if (activePlayerCheck != null)
                     {
-                        var activePlayerCheck = await _casinoGodsDbContext.ActivePlayersTable.SingleOrDefaultAsync(play => play.username == playerRequest.username);
-                        if (activePlayerCheck != null) {
-                            if (activePlayerCheck.jwtExpires > DateTime.Now) return Unauthorized("User is already logged in");
-                            else { _casinoGodsDbContext.ActivePlayersTable.Remove(activePlayerCheck);}
-                        }
-                        
-                        string jwt = loggedPlayer.CreateToken(playerRequest.username, _configuration);
-                        var refreshToken = GenerateToken(jwt);
-                        SetRefreshToken(loggedPlayer, refreshToken);
+                        if (activePlayerCheck.jwtExpires > DateTime.Now) return Unauthorized("User is already logged in");
+                        else { _casinoGodsDbContext.ActivePlayersTable.Remove(activePlayerCheck); }
+                    }
+
+                    string jwt = loggedPlayer.CreateToken(playerRequest.username, _configuration);
+                    var refreshToken = GenerateToken(jwt);
+                    SetRefreshToken(loggedPlayer, refreshToken);
 
                     ActivePlayerDTO ap = new ActivePlayerDTO
                     {
@@ -110,12 +106,12 @@ namespace CasinoGodsAPI.Controllers
                         bankroll = loggedPlayer.bankroll,
                         profit = loggedPlayer.profit,
                         jwt = jwt
-                    }; 
-                        await _casinoGodsDbContext.SaveChangesAsync();
-                        return Ok(ap);                       
-                    }
-                }          
-        } 
+                    };
+                    await _casinoGodsDbContext.SaveChangesAsync();
+                    return Ok(ap);
+                }
+            }
+        }
         private RefreshToken GenerateToken(string jwt)
         {
             var refreshToken = new RefreshToken
@@ -126,7 +122,7 @@ namespace CasinoGodsAPI.Controllers
 
             return refreshToken;
         }
-        private async void SetRefreshToken(Player loggedPlayer,RefreshToken refreshToken)
+        private async void SetRefreshToken(Player loggedPlayer, RefreshToken refreshToken)
         {
             var newActivePlayer = new ActivePlayers
             {
@@ -150,13 +146,13 @@ namespace CasinoGodsAPI.Controllers
 
         [Route("guest")]
         [HttpPost]
-        public async Task<IActionResult> guest()
+        public async Task<IActionResult> Guest()
         {
             Player guestPlayer = new Player
             {
                 bankroll = 1000,
                 profit = 0,
-                username="guest"+ new Random().Next(0,100000),
+                username = "guest" + new Random().Next(0, 100000),
             };
             string jwt = guestPlayer.CreateToken("guest", _configuration);
             var refreshToken = GenerateToken(jwt);
@@ -172,6 +168,7 @@ namespace CasinoGodsAPI.Controllers
             await _casinoGodsDbContext.SaveChangesAsync();
             return Ok(ap);
         }
+
         [Route("refreshToken")]
         [HttpPut]
         public async Task<IActionResult> RefreshToken([FromBody] JwtClass jwt)
@@ -192,14 +189,14 @@ namespace CasinoGodsAPI.Controllers
             {
                 Console.WriteLine("udalo sie");
                 jwt.jwtString = ActivePlayer.CreateToken(ActivePlayer.username, _configuration);
-                var refreshToken = reGenerateToken(jwt.jwtString);
+                var refreshToken = ReGenerateToken(jwt.jwtString);
                 ActivePlayer.jwtExpires = refreshToken.Expires;
                 ActivePlayer.RefreshToken = refreshToken.Token;
                 await _casinoGodsDbContext.SaveChangesAsync();
             }
             return Ok(ActivePlayer.RefreshToken);
         }
-        private RefreshToken reGenerateToken(string jwt)
+        private RefreshToken ReGenerateToken(string jwt)
         {
             var refreshToken = new RefreshToken
             {
@@ -212,15 +209,15 @@ namespace CasinoGodsAPI.Controllers
 
         [Route("recovery")]
         [HttpPut]
+        public async Task<IActionResult> RecoveryPlayer([FromBody] EmailRecovery email)
+        {
 
-        public async Task<IActionResult> recoveryPlayer([FromBody] EmailRecovery email) {
-
-            var playerToRecover=_casinoGodsDbContext.Players.SingleOrDefault(play => play.email == email.emailRec);
+            var playerToRecover = _casinoGodsDbContext.Players.SingleOrDefault(play => play.email == email.emailRec);
             if (playerToRecover != null)
             {
                 string newPass = Player.GetRandomPassword(10);
                 playerToRecover.password = newPass;
-                
+
                 await _casinoGodsDbContext.SaveChangesAsync();
                 Player.sendRecoveryEmail(playerToRecover.email, playerToRecover.password);
                 return Ok();
@@ -230,13 +227,13 @@ namespace CasinoGodsAPI.Controllers
 
         [Route("Logout")]
         [HttpPut]
-        public async Task<IActionResult> deleteActivePlayer([FromBody] JwtClass jwt)
+        public async Task<IActionResult> DeleteActivePlayer([FromBody] JwtClass jwt)
         {
             Console.WriteLine(jwt.jwtString);
             var playerToDelete = _casinoGodsDbContext.ActivePlayersTable.SingleOrDefault(play => play.RefreshToken == jwt.jwtString);
             Console.WriteLine(playerToDelete.username);
             Console.WriteLine(playerToDelete.RefreshToken);
-          
+
             if (playerToDelete != null)
             {
                 _casinoGodsDbContext.ActivePlayersTable.Remove(playerToDelete);
@@ -244,5 +241,20 @@ namespace CasinoGodsAPI.Controllers
             }
             return Ok();
         }
+
+        [Route("PlayGame")]
+        [HttpPost]
+        public async Task<IActionResult> PlayGame([FromBody] PlayGameData ramka )
+        {
+            //check jwt
+            //check table
+            //take a seat
+
+
+
+            return Ok();
+        }
+
+
     }
 }

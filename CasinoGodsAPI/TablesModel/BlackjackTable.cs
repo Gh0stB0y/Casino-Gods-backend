@@ -41,12 +41,15 @@ namespace CasinoGodsAPI.BlackjackTableModel
 
         public bool CheckTable(BlackjackTableDatabase newTable)
         {
-            if (newTable.minBet < 0 ||
+            if (
+                newTable.minBet < 0 ||
                 newTable.maxBet < newTable.minBet ||
                 newTable.betTime < 0 ||
                 newTable.actionTime < 0 ||
                 newTable.decks < 1 ||
-                newTable.seatsCount < 1) return false;
+                newTable.decks>10||
+                newTable.seatsCount < 1 ||
+                newTable.seatsCount>10) return false;
             else return true;
         }
     }

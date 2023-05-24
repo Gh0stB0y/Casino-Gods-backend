@@ -30,8 +30,8 @@ namespace CasinoGodsAPI.Controllers
         public async Task<IActionResult> RegisterPlayer([FromBody] PlayerSignUp playerRequest)
         {
             //warunki do spelnienia, unikalny login,unikalny mail,
-            if ((_casinoGodsDbContext.Players.SingleOrDefault(play => play.username == playerRequest.username) == null) &&
-                 _casinoGodsDbContext.Players.SingleOrDefault(play => play.email == playerRequest.email) == null)
+            if ((await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.username == playerRequest.username) == null) &&
+                 await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.email == playerRequest.email) == null)
             {
 
                 string message = PlayerSignUp.CheckSignUpCredentials(playerRequest);
@@ -212,7 +212,7 @@ namespace CasinoGodsAPI.Controllers
         public async Task<IActionResult> RecoveryPlayer([FromBody] EmailRecovery email)
         {
 
-            var playerToRecover = _casinoGodsDbContext.Players.SingleOrDefault(play => play.email == email.emailRec);
+            var playerToRecover = await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.email == email.emailRec);
             if (playerToRecover != null)
             {
                 string newPass = Player.GetRandomPassword(10);
@@ -230,7 +230,7 @@ namespace CasinoGodsAPI.Controllers
         public async Task<IActionResult> DeleteActivePlayer([FromBody] JwtClass jwt)
         {
             Console.WriteLine(jwt.jwtString);
-            var playerToDelete = _casinoGodsDbContext.ActivePlayersTable.SingleOrDefault(play => play.RefreshToken == jwt.jwtString);
+            var playerToDelete = await _casinoGodsDbContext.ActivePlayersTable.SingleOrDefaultAsync(play => play.RefreshToken == jwt.jwtString);
             Console.WriteLine(playerToDelete.username);
             Console.WriteLine(playerToDelete.RefreshToken);
 

@@ -12,7 +12,6 @@ namespace CasinoGodsAPI.Models
 
         
     }
-
     public class ActivePlayers
     {
         [Key]
@@ -46,7 +45,6 @@ namespace CasinoGodsAPI.Models
     {
 
     }
-
     public class GamesDatabase
     {
         [Key]
@@ -65,6 +63,4 @@ namespace CasinoGodsAPI.Models
         public float profit { get; set; } = 0;
 
     }
-
-
 }

@@ -1,4 +1,5 @@
 using CasinoGodsAPI.Data;
+using CasinoGodsAPI.TablesModel;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -41,6 +42,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddDbContext<CasinoGodsDbContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("FullStackConnectionString")));
+
+builder.Services.AddSignalR();
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(builder =>
+    {
+        builder.WithOrigins("http://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); // Allow sending credentials (e.g., cookies) with the request
+    });
+});
+//
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -51,13 +65,21 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
+//app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin().SetIsOriginAllowed((host) => true));
+app.UseCors();
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+//HUB settings
 
+//
 app.MapControllers();
-
+app.UseEndpoints(endpoints => {
+    endpoints.MapHub<BlackJackLobby>("/BlackJackLobby");
+    endpoints.MapHub<RouletteLobby>("/RouletteLobby");
+    endpoints.MapHub<DragonTigerLobby>("/DragonTigerLobby");
+    endpoints.MapHub<WarLobby>("/WarLobby");
+});
 Init();
 
 app.Run();

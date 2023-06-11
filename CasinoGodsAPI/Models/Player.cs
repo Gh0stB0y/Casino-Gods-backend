@@ -8,7 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 
 using System.ComponentModel.DataAnnotations;
-
+using StackExchange.Redis;
 
 namespace CasinoGodsAPI.Models
 {
@@ -167,5 +167,6 @@ namespace CasinoGodsAPI.Models
     {
         public string emailRec { get; set; } = string.Empty;
     }
-  
+
+    
 }

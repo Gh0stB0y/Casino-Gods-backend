@@ -10,10 +10,12 @@ using Microsoft.AspNetCore.CookiePolicy;
 using StackExchange.Redis;
 using CasinoGodsAPI.TablesModel;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.SignalR;
 
 namespace CasinoGodsAPI.Controllers
 {
-
+    
     [ApiController]
     [Route("api/[controller]")]
     public class PlayersController : Controller
@@ -21,17 +23,19 @@ namespace CasinoGodsAPI.Controllers
         private readonly CasinoGodsDbContext _casinoGodsDbContext;
         private readonly IConfiguration _configuration;
         private readonly IConnectionMultiplexer _redis;
-        private IDatabase redisDbLogin, redisDbJwt;
-        public PlayersController(CasinoGodsDbContext CasinoGodsDbContext, IConfiguration configuration, IConnectionMultiplexer redis)
+        private readonly IHubContext<BlackJackLobby> _BlackJackLobbyContext;
+        private readonly IDatabase redisDbLogin, redisDbJwt;
+        public PlayersController(CasinoGodsDbContext CasinoGodsDbContext, IConfiguration configuration, IConnectionMultiplexer redis,
+                                 IHubContext<BlackJackLobby>BlackJackLobbyContext)
         {
             _casinoGodsDbContext = CasinoGodsDbContext;
             _configuration = configuration;
-            _redis=redis;
+            _redis=redis;        
             redisDbLogin = redis.GetDatabase();
             redisDbJwt = redis.GetDatabase();
+            _BlackJackLobbyContext=BlackJackLobbyContext;
         }
-
-
+        
         [Route("register")]
         [HttpPost]
         public async Task<IActionResult> RegisterPlayer([FromBody] PlayerSignUp playerRequest)
@@ -150,18 +154,11 @@ namespace CasinoGodsAPI.Controllers
         [HttpPut]
         public async Task<IActionResult> RefreshToken([FromBody] JwtClass jwt)
         {
-            var ActivePlayerCheck = await redisDbJwt.StringGetAsync(jwt.jwtString);
-            if (ActivePlayerCheck.IsNull) return Unauthorized("Session expired, log in again");
-            else
-            {
-                string username = ActivePlayerCheck.ToString();
-                var ActivePlayer = new ActivePlayers(username, _configuration);
-                redisDbLogin.StringSetAsync(ActivePlayer.Name, ActivePlayer.jwt, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
-                redisDbJwt.StringSetAsync(ActivePlayer.jwt, ActivePlayer.Name, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
-                return Ok(ActivePlayer.jwt);
-            }    
+            string response = await GlobalFunctions.RefreshTokenGlobal(jwt.jwtString, redisDbLogin, redisDbJwt, _configuration);
+            if (response == "Session expired, log in again") return BadRequest(response);
+            else return Ok(response);
         }
-
+        
         [Route("recovery")]
         [HttpPut]
         public async Task<IActionResult> RecoveryPlayer([FromBody] EmailRecovery email)
@@ -193,28 +190,32 @@ namespace CasinoGodsAPI.Controllers
         }
 
         [Route("TablesData")]
-        [HttpGet]
-        public async Task<IActionResult> GetTablesData()
-        {         
-            var games = await _casinoGodsDbContext.GamesList.Select(str=>str.Name).ToListAsync();
-            List<TableDataDTO>TableInfoList = new List<TableDataDTO>();
-            foreach (var game in games)
-            {                
-                List<string> tables = await _casinoGodsDbContext.TablesList.Where(g => g.game.Name == game).OrderBy(g=>g.minBet).Select(s=>s.name).ToListAsync();
-                List<int> minBets = await _casinoGodsDbContext.TablesList.Where(g => g.game.Name == game).OrderBy(g => g.minBet).Select(s => s.minBet).ToListAsync();
-                List<int> maxBets = await _casinoGodsDbContext.TablesList.Where(g => g.game.Name == game).OrderBy(g => g.minBet).Select(s => s.maxBet).ToListAsync();              
-                TableDataDTO singleTable= new TableDataDTO()
-                { 
-                    gameNames=game,
-                    tableNames=tables,
-                    minBets=minBets,
-                    maxBets=maxBets
-                };
-
-                //if(!singleTable.tableNames.IsNullOrEmpty())
-                TableInfoList.Add(singleTable);
+        [HttpPost]
+        public async Task<IActionResult> GetTablesData([FromBody] JwtClass jwt)
+        {
+            string response = await GlobalFunctions.RefreshTokenGlobal(jwt.jwtString, redisDbLogin, redisDbJwt, _configuration);
+            if (response == "Session expired, log in again") return BadRequest(response);
+            else
+            {
+                TableDataDTO obj= new TableDataDTO()
+                {
+                    gameNames= await _casinoGodsDbContext.GamesList.Select(str => str.Name).ToListAsync(),
+                    jwt=response
+                };           
+                return Ok(obj);
             }
-            return Ok(TableInfoList);
         }                                
+   
+        [Route("HubTest")]
+        [HttpPost]
+        public async Task<IActionResult> HubTest(string msg)
+        {
+                await _BlackJackLobbyContext.Clients.All.SendAsync("FirstMessage",msg);
+                return Ok();                     
+        }
+    
+    
+    
+    
     }
 }

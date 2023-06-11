@@ -26,10 +26,8 @@ namespace CasinoGodsAPI.TablesModel
     } //MODEL OGOLNEGO STOLU
     public class TableDataDTO   //DTO DO PRZESYLANIA INFO O DOSTEPNYCH GRACH I STOLACH
     {
-        public string gameNames { get; set; } = string.Empty;
-        public List<string> tableNames { get; set; } = new List<string>();
-        public List<int> minBets { get; set; } = new List<int>();
-        public List<int> maxBets { get; set; } = new List<int>();
+        public string jwt { get; set; } = string.Empty;
+        public List<string> gameNames { get; set; }
     }
     public class BlackjackTablesDatabase //MODEL STOLU BLACKJACKA DO BAZY DANYCH
     {
@@ -155,10 +153,7 @@ namespace CasinoGodsAPI.TablesModel
         }
     }
 
-    public static class BlackjackActiveTables
-    {
-        public static List<BlackjackTable> ActiveTables { get; set; }
-    } //LISTA AKTYWNYCH STOLOW DO HUBA
+   
     public class BlackjackSeat
     {
         public int ID { get; set; }

@@ -6,8 +6,10 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.CookiePolicy;
-using CasinoGodsAPI.Migrations;
-using CasinoGodsAPI.BlackjackTableModel;
+//using CasinoGodsAPI.Migrations;
+using StackExchange.Redis;
+using CasinoGodsAPI.TablesModel;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CasinoGodsAPI.Controllers
 {
@@ -18,10 +20,15 @@ namespace CasinoGodsAPI.Controllers
     {
         private readonly CasinoGodsDbContext _casinoGodsDbContext;
         private readonly IConfiguration _configuration;
-        public PlayersController(CasinoGodsDbContext CasinoGodsDbContext, IConfiguration configuration)
+        private readonly IConnectionMultiplexer _redis;
+        private IDatabase redisDbLogin, redisDbJwt;
+        public PlayersController(CasinoGodsDbContext CasinoGodsDbContext, IConfiguration configuration, IConnectionMultiplexer redis)
         {
             _casinoGodsDbContext = CasinoGodsDbContext;
             _configuration = configuration;
+            _redis=redis;
+            redisDbLogin = redis.GetDatabase();
+            redisDbJwt = redis.GetDatabase();
         }
 
 
@@ -89,17 +96,11 @@ namespace CasinoGodsAPI.Controllers
                 if (!CheckPassword(playerRequest.password, loggedPlayer.passHash, loggedPlayer.passSalt)) return BadRequest("Password not correct");
                 else
                 {
-                    var activePlayerCheck = await _casinoGodsDbContext.ActivePlayersTable.SingleOrDefaultAsync(play => play.username == playerRequest.username);
-                    if (activePlayerCheck != null)
-                    {
-                        if (activePlayerCheck.jwtExpires > DateTime.Now) return Unauthorized("User is already logged in");
-                        else { _casinoGodsDbContext.ActivePlayersTable.Remove(activePlayerCheck); }
-                    }
-
+                    var activePlayerCheck =await redisDbLogin.StringGetAsync(playerRequest.username);
+                    if (!activePlayerCheck.IsNull) return Unauthorized("User is already logged in");
                     string jwt = loggedPlayer.CreateToken(playerRequest.username, _configuration);
-                    var refreshToken = GenerateToken(jwt);
-                    SetRefreshToken(loggedPlayer, refreshToken);
-
+                    redisDbLogin.StringSetAsync(playerRequest.username, jwt,new TimeSpan(0,0,5,0), flags: CommandFlags.FireAndForget);
+                    redisDbJwt.StringSetAsync(jwt, playerRequest.username, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
                     ActivePlayerDTO ap = new ActivePlayerDTO
                     {
                         username = loggedPlayer.username,
@@ -107,33 +108,10 @@ namespace CasinoGodsAPI.Controllers
                         profit = loggedPlayer.profit,
                         jwt = jwt
                     };
-                    await _casinoGodsDbContext.SaveChangesAsync();
                     return Ok(ap);
                 }
             }
-        }
-        private RefreshToken GenerateToken(string jwt)
-        {
-            var refreshToken = new RefreshToken
-            {
-                Token = jwt,
-                Expires = DateTime.Now.AddMinutes(1)
-            };
-
-            return refreshToken;
-        }
-        private async void SetRefreshToken(Player loggedPlayer, RefreshToken refreshToken)
-        {
-            var newActivePlayer = new ActivePlayers
-            {
-                username = loggedPlayer.username,
-                bankroll = loggedPlayer.bankroll,
-                profit = loggedPlayer.profit,
-                RefreshToken = refreshToken.Token,
-                jwtExpires = refreshToken.Expires
-            };
-            await _casinoGodsDbContext.ActivePlayersTable.AddAsync(newActivePlayer);
-        }
+        }     
         private bool CheckPassword(string password, byte[] passHash, byte[] passSalt)
         {
             using (var hmac = new HMACSHA512(passSalt))
@@ -155,8 +133,8 @@ namespace CasinoGodsAPI.Controllers
                 username = "guest" + new Random().Next(0, 100000),
             };
             string jwt = guestPlayer.CreateToken("guest", _configuration);
-            var refreshToken = GenerateToken(jwt);
-            SetRefreshToken(guestPlayer, refreshToken);
+            redisDbLogin.StringSetAsync(guestPlayer.username, jwt, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
+            redisDbJwt.StringSetAsync(jwt, guestPlayer.username, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
             ActivePlayerDTO ap = new ActivePlayerDTO
             {
                 username = guestPlayer.username,
@@ -164,7 +142,6 @@ namespace CasinoGodsAPI.Controllers
                 profit = guestPlayer.profit,
                 jwt = jwt
             };
-
             await _casinoGodsDbContext.SaveChangesAsync();
             return Ok(ap);
         }
@@ -173,38 +150,16 @@ namespace CasinoGodsAPI.Controllers
         [HttpPut]
         public async Task<IActionResult> RefreshToken([FromBody] JwtClass jwt)
         {
-            Console.WriteLine("MOJE JWT:");
-            Console.WriteLine(jwt.jwtString);
-            ActivePlayers ActivePlayer = await _casinoGodsDbContext.ActivePlayersTable.SingleOrDefaultAsync(play => play.RefreshToken == jwt.jwtString);
-            if (ActivePlayer == null) { return Unauthorized("Unauthorized JWT"); }
-
-            else if (ActivePlayer.jwtExpires < DateTime.Now)
-            {
-                ActivePlayer.RefreshToken = null;
-                _casinoGodsDbContext.ActivePlayersTable.Remove(ActivePlayer);
-                await _casinoGodsDbContext.SaveChangesAsync();
-                return Unauthorized("JWT expired,log in again");
-            }
+            var ActivePlayerCheck = await redisDbJwt.StringGetAsync(jwt.jwtString);
+            if (ActivePlayerCheck.IsNull) return Unauthorized("Session expired, log in again");
             else
             {
-                Console.WriteLine("udalo sie");
-                jwt.jwtString = ActivePlayer.CreateToken(ActivePlayer.username, _configuration);
-                var refreshToken = ReGenerateToken(jwt.jwtString);
-                ActivePlayer.jwtExpires = refreshToken.Expires;
-                ActivePlayer.RefreshToken = refreshToken.Token;
-                await _casinoGodsDbContext.SaveChangesAsync();
-            }
-            return Ok(ActivePlayer.RefreshToken);
-        }
-        private RefreshToken ReGenerateToken(string jwt)
-        {
-            var refreshToken = new RefreshToken
-            {
-                Token = jwt,
-                Expires = DateTime.Now.AddMinutes(1)
-            };
-
-            return refreshToken;
+                string username = ActivePlayerCheck.ToString();
+                var ActivePlayer = new ActivePlayers(username, _configuration);
+                redisDbLogin.StringSetAsync(ActivePlayer.Name, ActivePlayer.jwt, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
+                redisDbJwt.StringSetAsync(ActivePlayer.jwt, ActivePlayer.Name, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
+                return Ok(ActivePlayer.jwt);
+            }    
         }
 
         [Route("recovery")]
@@ -229,32 +184,37 @@ namespace CasinoGodsAPI.Controllers
         [HttpPut]
         public async Task<IActionResult> DeleteActivePlayer([FromBody] JwtClass jwt)
         {
-            Console.WriteLine(jwt.jwtString);
-            var playerToDelete = await _casinoGodsDbContext.ActivePlayersTable.SingleOrDefaultAsync(play => play.RefreshToken == jwt.jwtString);
-            Console.WriteLine(playerToDelete.username);
-            Console.WriteLine(playerToDelete.RefreshToken);
+            var playerToDelete = await redisDbJwt.StringGetAsync(jwt.jwtString);
+            if (!playerToDelete.IsNull) {
+                redisDbJwt.KeyDeleteAsync(jwt.jwtString, flags: CommandFlags.FireAndForget);
+                redisDbLogin.KeyDeleteAsync(playerToDelete.ToString(), flags: CommandFlags.FireAndForget);
+             }
+            return Ok();
+        }
 
-            if (playerToDelete != null)
-            {
-                _casinoGodsDbContext.ActivePlayersTable.Remove(playerToDelete);
-                await _casinoGodsDbContext.SaveChangesAsync();
+        [Route("TablesData")]
+        [HttpGet]
+        public async Task<IActionResult> GetTablesData()
+        {         
+            var games = await _casinoGodsDbContext.GamesList.Select(str=>str.Name).ToListAsync();
+            List<TableDataDTO>TableInfoList = new List<TableDataDTO>();
+            foreach (var game in games)
+            {                
+                List<string> tables = await _casinoGodsDbContext.TablesList.Where(g => g.game.Name == game).OrderBy(g=>g.minBet).Select(s=>s.name).ToListAsync();
+                List<int> minBets = await _casinoGodsDbContext.TablesList.Where(g => g.game.Name == game).OrderBy(g => g.minBet).Select(s => s.minBet).ToListAsync();
+                List<int> maxBets = await _casinoGodsDbContext.TablesList.Where(g => g.game.Name == game).OrderBy(g => g.minBet).Select(s => s.maxBet).ToListAsync();              
+                TableDataDTO singleTable= new TableDataDTO()
+                { 
+                    gameNames=game,
+                    tableNames=tables,
+                    minBets=minBets,
+                    maxBets=maxBets
+                };
+
+                //if(!singleTable.tableNames.IsNullOrEmpty())
+                TableInfoList.Add(singleTable);
             }
-            return Ok();
-        }
-
-        [Route("PlayGame")]
-        [HttpPost]
-        public async Task<IActionResult> PlayGame([FromBody] PlayGameData ramka )
-        {
-            //check jwt
-            //check table
-            //take a seat
-
-
-
-            return Ok();
-        }
-
-
+            return Ok(TableInfoList);
+        }                                
     }
 }

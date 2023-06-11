@@ -5,22 +5,11 @@ using System.Security.Claims;
 
 namespace CasinoGodsAPI.Models
 {
-    public class RefreshToken
-    {
-        public string Token { get; set; }
-        public DateTime Expires { get; set; }
-
-        
-    }
     public class ActivePlayers
     {
-        [Key]
-        public string username { get; set; } = string.Empty;
-        public int bankroll { get; set; }
-        public int profit { get; set; }
-        public string RefreshToken { get; set; }
-        public DateTime jwtExpires { get; set; }
-        public string CreateToken(string uname, IConfiguration configuration)
+        public string Name { get; set; } = string.Empty;
+        public string jwt { get; set; } = string.Empty;
+        public ActivePlayers(string uname, IConfiguration configuration)
         {
             List<Claim> claims = new List<Claim>
             {
@@ -34,15 +23,10 @@ namespace CasinoGodsAPI.Models
                 expires: DateTime.Now.AddMinutes(5),
                 signingCredentials: credentials
                 );
-            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
-            //string jsonString = JsonSerializer.Serialize(jwt);
-
-            return jwt;
+            var jwt_string = new JwtSecurityTokenHandler().WriteToken(token);
+            jwt = jwt_string;
+            Name = uname;
         }
-
-    }
-    public class ActivePlayerStats
-    {
 
     }
     public class GamesDatabase
@@ -63,4 +47,22 @@ namespace CasinoGodsAPI.Models
         public float profit { get; set; } = 0;
 
     }
+    public class ActivePlayerDTO
+    {
+        public string username { get; set; } = string.Empty;
+        public int bankroll { get; set; } = 0;
+        public int profit { get; set; } = 0;
+        public string jwt { get; set; } = string.Empty;
+    }
+    
+    /*public class TableInputDTO
+    {
+        public string game { get; set; }
+        public string tableName { get; set; }
+        public int minBet { get; set; } = 0;
+        public int maxBet { get; set; } = 100000;
+        public int betTime { get; set; } = 30;
+
+    }*/
+
 }

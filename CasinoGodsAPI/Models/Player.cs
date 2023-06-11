@@ -167,11 +167,5 @@ namespace CasinoGodsAPI.Models
     {
         public string emailRec { get; set; } = string.Empty;
     }
-    public class ActivePlayerDTO
-    {
-        public string username { get; set; } = string.Empty;
-        public int bankroll { get; set; } = 0;
-        public int profit { get; set; } = 0;
-        public string jwt { get; set; } = string.Empty;
-    }
+  
 }

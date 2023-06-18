@@ -75,6 +75,7 @@ app.UseAuthorization();
 //
 app.MapControllers();
 app.UseEndpoints(endpoints => {
+    endpoints.MapHub<BacarratLobby>("/BacarratLobby");
     endpoints.MapHub<BlackJackLobby>("/BlackJackLobby");
     endpoints.MapHub<RouletteLobby>("/RouletteLobby");
     endpoints.MapHub<DragonTigerLobby>("/DragonTigerLobby");

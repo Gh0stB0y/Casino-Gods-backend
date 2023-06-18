@@ -210,7 +210,7 @@ namespace CasinoGodsAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> HubTest(string msg)
         {
-                await _BlackJackLobbyContext.Clients.All.SendAsync("FirstMessage",msg);
+                await _BlackJackLobbyContext.Clients.All.SendAsync("ChatMessages", msg);
                 return Ok();                     
         }
     

@@ -22,7 +22,9 @@ namespace CasinoGodsAPI.TablesModel
 
         public int minBet { get; set; } = 0;
         public int maxBet { get; set; } = 100000;
-        public int betTime { get; set; } = 30;    
+        public int betTime { get; set; } = 30;
+        public int MaxSeats { get; set; } = 5;
+        //public virtual GamesDatabase GameDatabase { get; set; }
     } //MODEL OGOLNEGO STOLU
     public class TableDataDTO   //DTO DO PRZESYLANIA INFO O DOSTEPNYCH GRACH I STOLACH
     {
@@ -33,7 +35,7 @@ namespace CasinoGodsAPI.TablesModel
     {
         [Key, Column(Order = 0)]
         public int Id { get; set; }
-        [Key, Column(Order = 0)]
+        [Key, Column(Order = 1)]
         public TablesDatabase table { get; set; }
         public int actionTime { get; set; } = 15;
         public bool sidebet1 { get; set; } = true;
@@ -83,8 +85,7 @@ namespace CasinoGodsAPI.TablesModel
             else return true;
         }
     }
-
-    public class BlackjackTable //MODEL DO OBSLUGI HUBA
+    public class TablesModels //MODEL DO OBSLUGI HUBA
     {
         private Guid ID { get; set; } = Guid.NewGuid();
         public string name { get; set; } = string.Empty;
@@ -100,7 +101,7 @@ namespace CasinoGodsAPI.TablesModel
         private List<BlackjackSeat> seats { get; set; } = null;
 
 
-        public BlackjackTable(BlackjackTablesDatabase input, CasinoGodsDbContext _casinoGodsDbContext)
+        public TablesModels(BlackjackTablesDatabase input, CasinoGodsDbContext _casinoGodsDbContext)
         {
             name = input.table.name;
             minBet = input.table.minBet;
@@ -164,5 +165,13 @@ namespace CasinoGodsAPI.TablesModel
         public int currentSidebet1 { get; set; } = 0;
         public int currentSidebet2 { get; set; } = 0;
         public BlackjackSeat(int input) { ID = input; }
+    }
+    public class LobbyTableData
+    {
+        public string TableName { get; set; }
+        public int MinBet { get; set; }
+        public int MaxBet { get; set; }
+        public int MaxSeats { get; set; }
+        public int SeatCount { get; set; }
     }
 }

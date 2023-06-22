@@ -23,17 +23,15 @@ namespace CasinoGodsAPI.Controllers
         private readonly CasinoGodsDbContext _casinoGodsDbContext;
         private readonly IConfiguration _configuration;
         private readonly IConnectionMultiplexer _redis;
-        private readonly IHubContext<BlackJackLobby> _BlackJackLobbyContext;
-        private readonly IDatabase redisDbLogin, redisDbJwt;
-        public PlayersController(CasinoGodsDbContext CasinoGodsDbContext, IConfiguration configuration, IConnectionMultiplexer redis,
-                                 IHubContext<BlackJackLobby>BlackJackLobbyContext)
+        private readonly IDatabase redisDbLogin, redisDbJwt,redisGuestBankrolls;
+        public PlayersController(CasinoGodsDbContext CasinoGodsDbContext, IConfiguration configuration, IConnectionMultiplexer redis)
         {
             _casinoGodsDbContext = CasinoGodsDbContext;
             _configuration = configuration;
-            _redis=redis;        
-            redisDbLogin = redis.GetDatabase();
-            redisDbJwt = redis.GetDatabase();
-            _BlackJackLobbyContext=BlackJackLobbyContext;
+            _redis=redis;
+            redisDbLogin = _redis.GetDatabase(0);
+            redisDbJwt = _redis.GetDatabase(1);
+            redisGuestBankrolls = _redis.GetDatabase(2);
         }
         
         [Route("register")]
@@ -139,6 +137,7 @@ namespace CasinoGodsAPI.Controllers
             string jwt = guestPlayer.CreateToken("guest", _configuration);
             redisDbLogin.StringSetAsync(guestPlayer.username, jwt, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
             redisDbJwt.StringSetAsync(jwt, guestPlayer.username, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
+            redisGuestBankrolls.StringSetAsync(guestPlayer.username, "1000");
             ActivePlayerDTO ap = new ActivePlayerDTO
             {
                 username = guestPlayer.username,
@@ -155,7 +154,7 @@ namespace CasinoGodsAPI.Controllers
         public async Task<IActionResult> RefreshToken([FromBody] JwtClass jwt)
         {
             string response = await GlobalFunctions.RefreshTokenGlobal(jwt.jwtString, redisDbLogin, redisDbJwt, _configuration);
-            if (response == "Session expired, log in again") return BadRequest(response);
+            if (response == "Session expired, log in again"|| response=="Redis data error, log in again") return BadRequest(response);
             else return Ok(response);
         }
         
@@ -195,27 +194,18 @@ namespace CasinoGodsAPI.Controllers
         {
             string response = await GlobalFunctions.RefreshTokenGlobal(jwt.jwtString, redisDbLogin, redisDbJwt, _configuration);
             if (response == "Session expired, log in again") return BadRequest(response);
+           
             else
             {
-                TableDataDTO obj= new TableDataDTO()
+                TableDataDTO obj = new TableDataDTO()
                 {
-                    gameNames= await _casinoGodsDbContext.GamesList.Select(str => str.Name).ToListAsync(),
-                    jwt=response
-                };           
+                    gameNames = await _casinoGodsDbContext.GamesList.Select(str => str.Name).ToListAsync(),
+                    jwt = response
+                };
                 return Ok(obj);
             }
         }                                
-   
-        [Route("HubTest")]
-        [HttpPost]
-        public async Task<IActionResult> HubTest(string msg)
-        {
-                await _BlackJackLobbyContext.Clients.All.SendAsync("ChatMessages", msg);
-                return Ok();                     
-        }
-    
-    
-    
+     
     
     }
 }

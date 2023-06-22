@@ -1,12 +1,12 @@
 ﻿namespace CasinoGodsAPI.Models
 {
-    public class LobbyTableData
+   
+
+    public class PlayerLobbyData
     {
-       public string jwt { get; set; }
-       public string TableName { get; set; }
-       public int MinBet { get; set; }
-       public int MaxBet { get; set; }
-       public int MaxSeats { get; set; }
-       public int SeatCount { get; set; }
+        public string connectionID { get; set; } = string.Empty;
+        public string username { get; set; } = string.Empty;
+        public string jwt { get; set; } =string.Empty;
+        public int bankroll { get; set; } = 0;
     }
 }

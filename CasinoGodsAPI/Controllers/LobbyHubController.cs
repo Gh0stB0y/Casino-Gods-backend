@@ -26,19 +26,5 @@ namespace CasinoGodsAPI.Controllers
             _hubContext = hubContext;
         }
 
-        [Route("chuj")]
-        [HttpPost]
-        public async Task<IActionResult> CHUJ()
-        {
-            return Ok();
-        }
-
-
-
-
-
-
-
-
     }
 }

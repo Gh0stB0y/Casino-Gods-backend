@@ -59,11 +59,18 @@ namespace CasinoGodsAPI.Models
         }
         public string CreateToken(string uname, IConfiguration configuration)
         {
-            List<Claim> claims = new List<Claim>
+            List<Claim> claims = new List<Claim>();
+            if (uname == "guest")
             {
-                new Claim(ClaimTypes.Name, uname),
-                new Claim(ClaimTypes.Role, "Player"),
-            };
+                claims.Add(new Claim(ClaimTypes.Name, this.username));
+                claims.Add(new Claim(ClaimTypes.Role, "Guest"));
+            }
+            else
+            {
+                claims.Add(new Claim(ClaimTypes.Name, this.username));
+                claims.Add(new Claim(ClaimTypes.Role, "Player"));
+            }
+
             var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(configuration.GetSection("AppSettings:Token").Value));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
             var token = new JwtSecurityToken(
@@ -77,8 +84,6 @@ namespace CasinoGodsAPI.Models
             return jwt;
         }
     }
-
-
     public class PlayerSignUp
     {
         public string username { get; set; } = string.Empty;
@@ -152,7 +157,6 @@ namespace CasinoGodsAPI.Models
             return lowerExist;
         }
     }
-
     public class PlayerSignIn
     {
         public string username { get; set; } = string.Empty;
@@ -167,6 +171,4 @@ namespace CasinoGodsAPI.Models
     {
         public string emailRec { get; set; } = string.Empty;
     }
-
-    
 }

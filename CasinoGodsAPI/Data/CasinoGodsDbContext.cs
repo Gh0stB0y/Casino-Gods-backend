@@ -15,10 +15,19 @@ namespace CasinoGodsAPI.Data
         public DbSet<TablesDatabase> TablesList { get; set; }
         public DbSet<Dealer> Dealers { get; set; }
         public DbSet<BlackjackTablesDatabase> MyBlackJackTables { get; set; }
-        public List<BlackjackTable> ActiveBlackjackTable { get; set; }
 
+      /*  protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<TablesDatabase>()
+                .HasKey(t => new { t.game, t.name });
 
+            modelBuilder.Entity<TablesDatabase>()
+                .HasOne(t => t.GameDatabase)
+                .WithMany(g => g.Tables)
+                .HasForeignKey(t => t.game);
 
+            base.OnModelCreating(modelBuilder);
+        }*/
 
     }
 }

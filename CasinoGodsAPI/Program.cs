@@ -1,6 +1,9 @@
 using CasinoGodsAPI.Data;
+using CasinoGodsAPI.Services;
 using CasinoGodsAPI.TablesModel;
+using Microsoft.AspNet.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -10,11 +13,27 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddSingleton<IConnectionMultiplexer>(opt=>
-    ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("RedisConnection")));
-
+var RedisConnection = builder.Configuration.GetConnectionString("RedisConnection");
+builder.Services.AddSingleton<IConnectionMultiplexer>(opt =>
+{
+    var configurationOptions = ConfigurationOptions.Parse(RedisConnection);
+    var connectionMultiplexer = ConnectionMultiplexer.Connect(configurationOptions);
+    for (int i = 1; i < 3; i++)
+    {
+        var database = connectionMultiplexer.GetDatabase();
+        database.Execute("SELECT", i);
+    }
+    return connectionMultiplexer;
+});
+builder.Services.AddSignalR();
 builder.Services.AddControllers();
+
+builder.Services.AddHostedService<LobbyService>();
+builder.Services.AddLogging(loggingBuilder =>
+{
+    loggingBuilder.AddConsole();
+    loggingBuilder.AddDebug();   
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -43,7 +62,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddDbContext<CasinoGodsDbContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("FullStackConnectionString")));
 
-builder.Services.AddSignalR();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>

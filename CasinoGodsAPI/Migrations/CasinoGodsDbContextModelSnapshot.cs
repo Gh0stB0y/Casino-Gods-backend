@@ -22,6 +22,50 @@ namespace CasinoGodsAPI.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("CasinoGodsAPI.Models.ActiveTablesDatabase", b =>
+                {
+                    b.Property<Guid>("TableInstanceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Game")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TablePath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("actionTime")
+                        .HasColumnType("int");
+
+                    b.Property<int>("betTime")
+                        .HasColumnType("int");
+
+                    b.Property<int>("decks")
+                        .HasColumnType("int");
+
+                    b.Property<int>("maxBet")
+                        .HasColumnType("int");
+
+                    b.Property<int>("maxseats")
+                        .HasColumnType("int");
+
+                    b.Property<int>("minBet")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("sidebet1")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("sidebet2")
+                        .HasColumnType("bit");
+
+                    b.HasKey("TableInstanceId");
+
+                    b.ToTable("ActiveTables");
+                });
+
             modelBuilder.Entity("CasinoGodsAPI.Models.Dealer", b =>
                 {
                     b.Property<int>("ID")
@@ -95,6 +139,28 @@ namespace CasinoGodsAPI.Migrations
                     b.ToTable("GamesList");
                 });
 
+            modelBuilder.Entity("CasinoGodsAPI.Models.LobbyTableData", b =>
+                {
+                    b.Property<Guid>("TableInstanceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TablePath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TableTypeCKGame")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("TableTypeCKname")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("TableInstanceId");
+
+                    b.HasIndex("TableTypeCKname", "TableTypeCKGame");
+
+                    b.ToTable("LobbyTableData");
+                });
+
             modelBuilder.Entity("CasinoGodsAPI.Models.Player", b =>
                 {
                     b.Property<Guid>("Id")
@@ -130,22 +196,32 @@ namespace CasinoGodsAPI.Migrations
                     b.ToTable("Players");
                 });
 
-            modelBuilder.Entity("CasinoGodsAPI.TablesModel.BlackjackTablesDatabase", b =>
+            modelBuilder.Entity("CasinoGodsAPI.Models.TablesDatabase", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<string>("CKname")
+                        .HasColumnType("nvarchar(450)")
                         .HasColumnOrder(0);
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("CKGame")
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnOrder(1);
 
                     b.Property<int>("actionTime")
+                        .HasColumnType("int");
+
+                    b.Property<int>("betTime")
                         .HasColumnType("int");
 
                     b.Property<int>("decks")
                         .HasColumnType("int");
 
-                    b.Property<int>("seatsCount")
+                    b.Property<int>("maxBet")
+                        .HasColumnType("int");
+
+                    b.Property<int>("maxseats")
+                        .HasColumnType("int");
+
+                    b.Property<int>("minBet")
                         .HasColumnType("int");
 
                     b.Property<bool>("sidebet1")
@@ -154,37 +230,9 @@ namespace CasinoGodsAPI.Migrations
                     b.Property<bool>("sidebet2")
                         .HasColumnType("bit");
 
-                    b.Property<string>("tablename")
-                        .HasColumnType("nvarchar(450)");
+                    b.HasKey("CKname", "CKGame");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("tablename");
-
-                    b.ToTable("MyBlackJackTables");
-                });
-
-            modelBuilder.Entity("CasinoGodsAPI.TablesModel.TablesDatabase", b =>
-                {
-                    b.Property<string>("name")
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnOrder(0);
-
-                    b.Property<int>("betTime")
-                        .HasColumnType("int");
-
-                    b.Property<string>("gameName")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("maxBet")
-                        .HasColumnType("int");
-
-                    b.Property<int>("minBet")
-                        .HasColumnType("int");
-
-                    b.HasKey("name");
-
-                    b.HasIndex("gameName");
+                    b.HasIndex("CKGame");
 
                     b.ToTable("TablesList");
                 });
@@ -204,22 +252,34 @@ namespace CasinoGodsAPI.Migrations
                     b.Navigation("player");
                 });
 
-            modelBuilder.Entity("CasinoGodsAPI.TablesModel.BlackjackTablesDatabase", b =>
+            modelBuilder.Entity("CasinoGodsAPI.Models.LobbyTableData", b =>
                 {
-                    b.HasOne("CasinoGodsAPI.TablesModel.TablesDatabase", "table")
-                        .WithMany()
-                        .HasForeignKey("tablename");
+                    b.HasOne("CasinoGodsAPI.Models.TablesDatabase", "TableType")
+                        .WithMany("ActiveTables")
+                        .HasForeignKey("TableTypeCKname", "TableTypeCKGame");
 
-                    b.Navigation("table");
+                    b.Navigation("TableType");
                 });
 
-            modelBuilder.Entity("CasinoGodsAPI.TablesModel.TablesDatabase", b =>
+            modelBuilder.Entity("CasinoGodsAPI.Models.TablesDatabase", b =>
                 {
-                    b.HasOne("CasinoGodsAPI.Models.GamesDatabase", "game")
-                        .WithMany()
-                        .HasForeignKey("gameName");
+                    b.HasOne("CasinoGodsAPI.Models.GamesDatabase", "Game")
+                        .WithMany("Tables")
+                        .HasForeignKey("CKGame")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("game");
+                    b.Navigation("Game");
+                });
+
+            modelBuilder.Entity("CasinoGodsAPI.Models.GamesDatabase", b =>
+                {
+                    b.Navigation("Tables");
+                });
+
+            modelBuilder.Entity("CasinoGodsAPI.Models.TablesDatabase", b =>
+                {
+                    b.Navigation("ActiveTables");
                 });
 #pragma warning restore 612, 618
         }

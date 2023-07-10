@@ -1,15 +1,21 @@
 using CasinoGodsAPI.Data;
+using CasinoGodsAPI.Hubs.TablesHubs;
 using CasinoGodsAPI.Services;
 using CasinoGodsAPI.TablesModel;
 using Microsoft.AspNet.SignalR;
+using Microsoft.AspNet.SignalR.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Org.BouncyCastle.Asn1.X509.Qualified;
 using StackExchange.Redis;
 using Swashbuckle.AspNetCore.Filters;
+using System.Collections.Concurrent;
 using System.Text;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,13 +24,14 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(opt =>
 {
     var configurationOptions = ConfigurationOptions.Parse(RedisConnection);
     var connectionMultiplexer = ConnectionMultiplexer.Connect(configurationOptions);
-    for (int i = 1; i < 3; i++)
+    for (int i = 1; i < 4; i++)
     {
         var database = connectionMultiplexer.GetDatabase();
         database.Execute("SELECT", i);
     }
     return connectionMultiplexer;
 });
+
 builder.Services.AddSignalR();
 builder.Services.AddControllers();
 
@@ -93,11 +100,34 @@ app.UseAuthorization();
 //
 app.MapControllers();
 app.UseEndpoints(endpoints => {
+
+    
+
     endpoints.MapHub<BacarratLobby>("/BacarratLobby");
-    endpoints.MapHub<BlackJackLobby>("/BlackJackLobby");
+    endpoints.MapHub<BlackjackLobby>("/BlackJackLobby");
     endpoints.MapHub<RouletteLobby>("/RouletteLobby");
     endpoints.MapHub<DragonTigerLobby>("/DragonTigerLobby");
     endpoints.MapHub<WarLobby>("/WarLobby");
+
+    endpoints.MapHub<BacarratTables1>("/BacarratTables1");
+    endpoints.MapHub<BacarratTables2>("/BacarratTables2");
+    endpoints.MapHub<BacarratTables3>("/BacarratTables3");
+
+    endpoints.MapHub<BlackjackTables1>("/BlackjackTables1");
+    endpoints.MapHub<BlackjackTables2>("/BlackjackTables2");
+    endpoints.MapHub<BlackjackTables3>("/BlackjackTables3");
+
+    endpoints.MapHub<DragonTigerTables1>("/Dragon TigerTables1");
+    endpoints.MapHub<DragonTigerTables2>("/Dragon TigerTables2");
+    endpoints.MapHub<DragonTigerTables3>("/Dragon TigerTables3");
+
+    endpoints.MapHub<RouletteTables1>("/RouletteTables1");
+    endpoints.MapHub<RouletteTables2>("/RouletteTables2");
+    endpoints.MapHub<RouletteTables3>("/RouletteTables3");
+
+    endpoints.MapHub<WarTables1>("/WarTables1");
+    endpoints.MapHub<WarTables2>("/WarTables2");
+    endpoints.MapHub<WarTables3>("/WarTables3");
 });
 Init();
 
@@ -108,3 +138,5 @@ void Init()
    
 
 }
+
+

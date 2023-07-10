@@ -11,9 +11,12 @@ namespace CasinoGodsAPI.Models
             else
             {
                 string username = ActivePlayerCheck.ToString();
+
+                await redisDbJwt.KeyDeleteAsync(jwt);
+                await redisDbLogin.KeyDeleteAsync(username);
                 var ActivePlayer = new ActivePlayers(username, jwt, _configuration);
-                redisDbLogin.StringSetAsync(ActivePlayer.Name, ActivePlayer.jwt, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
-                redisDbJwt.StringSetAsync(ActivePlayer.jwt, ActivePlayer.Name, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
+                await redisDbLogin.StringSetAsync(ActivePlayer.Name, ActivePlayer.jwt, new TimeSpan(0, 0, 5, 0));
+                await redisDbJwt.StringSetAsync(ActivePlayer.jwt, ActivePlayer.Name, new TimeSpan(0, 0, 5, 0));
                 return ActivePlayer.jwt;
             }
         }
@@ -26,9 +29,12 @@ namespace CasinoGodsAPI.Models
                 string username = ActivePlayerCheck.ToString();
                 if (UName == username)
                 {
+                    await redisDbJwt.KeyDeleteAsync(jwt);
+                    await redisDbLogin.KeyDeleteAsync(username);
                     var ActivePlayer = new ActivePlayers(username, jwt, _configuration);
-                    redisDbLogin.StringSetAsync(ActivePlayer.Name, ActivePlayer.jwt, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
-                    redisDbJwt.StringSetAsync(ActivePlayer.jwt, ActivePlayer.Name, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
+                    Console.WriteLine("JWT ZAPISANE DO REDISA" + ActivePlayer.jwt);
+                    await redisDbLogin.StringSetAsync(ActivePlayer.Name, ActivePlayer.jwt, new TimeSpan(0, 0, 5, 0));
+                    await redisDbJwt.StringSetAsync(ActivePlayer.jwt, ActivePlayer.Name, new TimeSpan(0, 0, 5, 0));
                     return ActivePlayer.jwt;
                 }
                 else return "Redis data error, log in again";

@@ -1,7 +1,10 @@
 ﻿using CasinoGodsAPI.TablesModel;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
+using StackExchange.Redis;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -41,12 +44,6 @@ namespace CasinoGodsAPI.Models
         }
 
     }
-    public class GamesDatabase
-    {
-        [Key]
-        public string Name { get; set; }
-        //public virtual ICollection<TablesDatabase> Tables { get; set; }
-    }
     public class GamePlusPlayer
     {
         public int Id { get; set; }
@@ -66,6 +63,57 @@ namespace CasinoGodsAPI.Models
         public int bankroll { get; set; } = 0;
         public int profit { get; set; } = 0;
         public string jwt { get; set; } = string.Empty;
+    }
+    public class GamesDatabase
+    {
+        public string Name { get; set; }
+        public ICollection<TablesDatabase> Tables { get; set; }
+        public GamesDatabase()
+        {
+            Tables = new HashSet<TablesDatabase>();
+        }
+    }  //MODEL BAZY DANYCH DOSTEPNYCH GIER
+    public class TablesDatabase
+    {
+        [Key, Column(Order = 0)]
+        public string CKname { get; set; }
+        [Key, Column(Order = 1)]
+        public string CKGame { get; set; }
+        public GamesDatabase Game { get; set; }
+        public int minBet { get; set; } = 0;
+        public int maxBet { get; set; } = 100000;
+        public int betTime { get; set; } = 30;  
+        public int maxseats { get; set; } = 5;
+        public int actionTime { get; set; } = 15;
+        public bool sidebet1 { get; set; } = true;
+        public bool sidebet2 { get; set; } = true;
+        public int decks { get; set; } = 6;
+
+        public ICollection<LobbyTableData> ActiveTables { get; set; }
+        public TablesDatabase()
+        {
+            ActiveTables = new HashSet<LobbyTableData>();
+        }
+
+
+    } //MODEL STOLOW DO GRY
+    public class ActiveTablesDatabase
+    {
+        [Key]
+        public Guid TableInstanceId { get; set; } = new Guid();
+        public string TablePath { get; set; } = string.Empty;
+
+        public string Name { get; set; }
+        public string Game { get; set; }
+        public int minBet { get; set; } = 0;
+        public int maxBet { get; set; } = 100000;
+        public int betTime { get; set; } = 30;
+        public int maxseats { get; set; } = 5;
+        public int actionTime { get; set; } = 15;
+        public bool sidebet1 { get; set; } = true;
+        public bool sidebet2 { get; set; } = true;
+        public int decks { get; set; } = 6;
+        
     }
 
 }

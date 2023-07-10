@@ -8,14 +8,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.CookiePolicy;
 //using CasinoGodsAPI.Migrations;
 using StackExchange.Redis;
-using CasinoGodsAPI.TablesModel;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.SignalR;
 
 namespace CasinoGodsAPI.Controllers
 {
-    
+
     [ApiController]
     [Route("api/[controller]")]
     public class PlayersController : Controller
@@ -192,12 +191,16 @@ namespace CasinoGodsAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> GetTablesData([FromBody] JwtClass jwt)
         {
+            Console.WriteLine(jwt.jwtString);
+            Console.WriteLine(jwt.jwtString.Length);
+
+
             string response = await GlobalFunctions.RefreshTokenGlobal(jwt.jwtString, redisDbLogin, redisDbJwt, _configuration);
             if (response == "Session expired, log in again") return BadRequest(response);
            
             else
             {
-                TableDataDTO obj = new TableDataDTO()
+                TableInitialDataDTO obj = new TableInitialDataDTO()
                 {
                     gameNames = await _casinoGodsDbContext.GamesList.Select(str => str.Name).ToListAsync(),
                     jwt = response
@@ -205,7 +208,5 @@ namespace CasinoGodsAPI.Controllers
                 return Ok(obj);
             }
         }                                
-     
-    
     }
 }

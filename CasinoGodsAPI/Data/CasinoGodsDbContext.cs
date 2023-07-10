@@ -9,25 +9,27 @@ namespace CasinoGodsAPI.Data
         public CasinoGodsDbContext(DbContextOptions options) : base(options)
         {
         }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<TablesDatabase>()
+            .HasKey(k => new { k.CKname, k.CKGame });
+            modelBuilder.Entity<GamesDatabase>()
+            .HasKey(k => k.Name);
+            modelBuilder.Entity<ActiveTablesDatabase>()
+            .HasKey(k => k.TableInstanceId);
+
+            modelBuilder.Entity<GamesDatabase>()
+            .HasMany(t => t.Tables)
+            .WithOne(m => m.Game)
+            .HasForeignKey(k => new { k.CKGame });
+
+        }
         public DbSet<Player> Players { get; set; }
         public DbSet<GamesDatabase> GamesList { get; set; }
         public DbSet<GamePlusPlayer> GamePlusPlayersTable{ get; set; }
         public DbSet<TablesDatabase> TablesList { get; set; }
         public DbSet<Dealer> Dealers { get; set; }
-        public DbSet<BlackjackTablesDatabase> MyBlackJackTables { get; set; }
-
-      /*  protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<TablesDatabase>()
-                .HasKey(t => new { t.game, t.name });
-
-            modelBuilder.Entity<TablesDatabase>()
-                .HasOne(t => t.GameDatabase)
-                .WithMany(g => g.Tables)
-                .HasForeignKey(t => t.game);
-
-            base.OnModelCreating(modelBuilder);
-        }*/
+        public DbSet<ActiveTablesDatabase>ActiveTables { get; set; }
 
     }
 }

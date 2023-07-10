@@ -1,7 +1,13 @@
-﻿using CasinoGodsAPI.TablesModel;
+﻿using CasinoGodsAPI.Data;
+using CasinoGodsAPI.Models;
+using CasinoGodsAPI.TablesModel;
 using Microsoft.AspNet.SignalR;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using StackExchange.Redis;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -10,11 +16,12 @@ namespace CasinoGodsAPI.Services
 {
     public class LobbyService : BackgroundService
     {
-
         private readonly Dictionary<Type, Microsoft.AspNetCore.SignalR.IHubContext<Microsoft.AspNetCore.SignalR.Hub>> _hubContexts;
         private readonly ILogger<LobbyService> _logger;
         private CancellationTokenSource _cancellationTokenSource;
-        public LobbyService(IServiceProvider serviceProvider, ILogger<LobbyService> logger) {
+        public static List<LobbyTableData>ActiveTablesList { get; set; }
+
+        public LobbyService(IServiceProvider serviceProvider, ILogger<LobbyService> logger, IConfiguration configuration, IConnectionMultiplexer redis) {
 
             _hubContexts = GetHubContexts(serviceProvider);
             _logger = logger;
@@ -53,12 +60,21 @@ namespace CasinoGodsAPI.Services
                     // akcje do wykonania przy cancellu
                     break;
                 }
-                foreach(var hubContext in _hubContexts)
+
+                if (LobbyHub.ActiveTables != null)
                 {
-                    await hubContext.Value.Clients.All.SendAsync("ChatMessages", "Kacper", "to kozak");
+                    foreach (var hubContext in _hubContexts)
+                    {
+                        string typ = hubContext.Key.Name.Replace("Lobby", "");
+                        if (typ == "DragonTiger") typ = "Dragon Tiger";
+                        List<ActiveTablesDatabase> list = new List<ActiveTablesDatabase>();
+                        List<LobbyTableDataDTO> listToSend = new List<LobbyTableDataDTO>();
+                        list = LobbyHub.ActiveTables.Where(g => g.Game == typ).ToList();
+                        foreach (var table in list) { listToSend.Add(new LobbyTableDataDTO(table)); }
+                        await hubContext.Value.Clients.All.SendAsync("TablesData", listToSend);
+                    }
+                    await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
                 }
-                //await _hubContext.Clients.All.SendAsync("ChatMessages", "Kacper", "to kozak");
-                await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
             }
         }
         public async Task StartBackgroundService() //reczne wlaczenie
@@ -73,7 +89,7 @@ namespace CasinoGodsAPI.Services
             await StopAsync(_cancellationTokenSource.Token);
         } //reczne wylaczenie
         //
-
+     
         //FUNKCJE CUSTOMOWE/POLECENIA DO WYKONANIA PRZY WYWOLANIU TIMERA
 
         //

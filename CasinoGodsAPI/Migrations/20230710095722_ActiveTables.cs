@@ -6,11 +6,33 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace CasinoGodsAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class tables : Migration
+    public partial class ActiveTables : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "ActiveTables",
+                columns: table => new
+                {
+                    TableInstanceId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TablePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Game = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    minBet = table.Column<int>(type: "int", nullable: false),
+                    maxBet = table.Column<int>(type: "int", nullable: false),
+                    betTime = table.Column<int>(type: "int", nullable: false),
+                    maxseats = table.Column<int>(type: "int", nullable: false),
+                    actionTime = table.Column<int>(type: "int", nullable: false),
+                    sidebet1 = table.Column<bool>(type: "bit", nullable: false),
+                    sidebet2 = table.Column<bool>(type: "bit", nullable: false),
+                    decks = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ActiveTables", x => x.TableInstanceId);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Dealers",
                 columns: table => new
@@ -60,20 +82,26 @@ namespace CasinoGodsAPI.Migrations
                 name: "TablesList",
                 columns: table => new
                 {
-                    name = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    gameName = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    CKname = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    CKGame = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     minBet = table.Column<int>(type: "int", nullable: false),
                     maxBet = table.Column<int>(type: "int", nullable: false),
-                    betTime = table.Column<int>(type: "int", nullable: false)
+                    betTime = table.Column<int>(type: "int", nullable: false),
+                    maxseats = table.Column<int>(type: "int", nullable: false),
+                    actionTime = table.Column<int>(type: "int", nullable: false),
+                    sidebet1 = table.Column<bool>(type: "bit", nullable: false),
+                    sidebet2 = table.Column<bool>(type: "bit", nullable: false),
+                    decks = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TablesList", x => x.name);
+                    table.PrimaryKey("PK_TablesList", x => new { x.CKname, x.CKGame });
                     table.ForeignKey(
-                        name: "FK_TablesList_GamesList_gameName",
-                        column: x => x.gameName,
+                        name: "FK_TablesList_GamesList_CKGame",
+                        column: x => x.CKGame,
                         principalTable: "GamesList",
-                        principalColumn: "Name");
+                        principalColumn: "Name",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -107,26 +135,22 @@ namespace CasinoGodsAPI.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "MyBlackJackTables",
+                name: "LobbyTableData",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    tablename = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    actionTime = table.Column<int>(type: "int", nullable: false),
-                    sidebet1 = table.Column<bool>(type: "bit", nullable: false),
-                    sidebet2 = table.Column<bool>(type: "bit", nullable: false),
-                    decks = table.Column<int>(type: "int", nullable: false),
-                    seatsCount = table.Column<int>(type: "int", nullable: false)
+                    TableInstanceId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TablePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TableTypeCKname = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    TableTypeCKGame = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_MyBlackJackTables", x => x.Id);
+                    table.PrimaryKey("PK_LobbyTableData", x => x.TableInstanceId);
                     table.ForeignKey(
-                        name: "FK_MyBlackJackTables_TablesList_tablename",
-                        column: x => x.tablename,
+                        name: "FK_LobbyTableData_TablesList_TableTypeCKname_TableTypeCKGame",
+                        columns: x => new { x.TableTypeCKname, x.TableTypeCKGame },
                         principalTable: "TablesList",
-                        principalColumn: "name");
+                        principalColumns: new[] { "CKname", "CKGame" });
                 });
 
             migrationBuilder.CreateIndex(
@@ -140,19 +164,22 @@ namespace CasinoGodsAPI.Migrations
                 column: "playerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MyBlackJackTables_tablename",
-                table: "MyBlackJackTables",
-                column: "tablename");
+                name: "IX_LobbyTableData_TableTypeCKname_TableTypeCKGame",
+                table: "LobbyTableData",
+                columns: new[] { "TableTypeCKname", "TableTypeCKGame" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_TablesList_gameName",
+                name: "IX_TablesList_CKGame",
                 table: "TablesList",
-                column: "gameName");
+                column: "CKGame");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "ActiveTables");
+
             migrationBuilder.DropTable(
                 name: "Dealers");
 
@@ -160,7 +187,7 @@ namespace CasinoGodsAPI.Migrations
                 name: "GamePlusPlayersTable");
 
             migrationBuilder.DropTable(
-                name: "MyBlackJackTables");
+                name: "LobbyTableData");
 
             migrationBuilder.DropTable(
                 name: "Players");

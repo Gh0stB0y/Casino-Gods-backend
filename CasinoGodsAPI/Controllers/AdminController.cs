@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.CookiePolicy;
 //using CasinoGodsAPI.Migrations;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using CasinoGodsAPI.TablesModel;
+using System.Xml.Linq;
 
 namespace CasinoGodsAPI.Controllers
 {
@@ -24,7 +24,6 @@ namespace CasinoGodsAPI.Controllers
             _configuration = configuration;
         }
 
-
         [Route("AddGame")]
         [HttpPost]
         public async Task<IActionResult> AddGame([FromBody] string gameName)
@@ -33,7 +32,6 @@ namespace CasinoGodsAPI.Controllers
             if (await _casinoGodsDbContext.GamesList.SingleOrDefaultAsync(g => g.Name == gameName) != null) return BadRequest("Game already exists in database");
             else
             {
-
                 GamesDatabase newGame = new GamesDatabase
                 {
                     Name = gameName,
@@ -78,71 +76,70 @@ namespace CasinoGodsAPI.Controllers
             else return BadRequest("Game not found");
         }
 
-        [Route("BlackjackManageTable")]
+        [Route("ManageTable")]
         [HttpPost]
-        public async Task<IActionResult> BlackjackManageTable([FromBody]BlackjackTableDTO BJobj) {
+        public async Task<IActionResult> ManageTable([FromBody]BlackjackTableDTO BJobj) {
 
-            string gameName = "Blackjack";
-            if (BJobj.CheckTable())
+ 
+            var gameObj = await _casinoGodsDbContext.GamesList.SingleOrDefaultAsync(g => g.Name == BJobj.gameType);
+            if (gameObj != null)
             {
-                switch (BJobj.actionType)
+                if (BJobj.CheckTable())
                 {
-                    case "add":                    
-                            if (await _casinoGodsDbContext.MyBlackJackTables.SingleOrDefaultAsync(t =>t.table.name == BJobj.name)==null) 
-                                {                             
+                    switch (BJobj.actionType)
+                    {
+                        case "add":
+                            if (await _casinoGodsDbContext.TablesList.Where(g => g.CKGame == gameObj.Name).SingleOrDefaultAsync(t => t.CKname == BJobj.name) == null)
+                            {
+
                                 TablesDatabase newTable = new TablesDatabase()
                                 {
-                                    game = await _casinoGodsDbContext.GamesList.SingleOrDefaultAsync(t => t.Name == gameName),
-                                    name = BJobj.name,                                   
+                                    CKname = BJobj.name,
+                                    CKGame = gameObj.Name,
                                     minBet = BJobj.minBet,
                                     maxBet = BJobj.maxBet,
                                     betTime = BJobj.betTime,
-                                };
-                                BlackjackTablesDatabase newBjTable = new BlackjackTablesDatabase()
-                                {
-                                    table=newTable,
+                                    maxseats = BJobj.maxSeats,
                                     actionTime=BJobj.actionTime,
-                                    sidebet1= BJobj.sidebet1,
-                                    sidebet2= BJobj.sidebet2,
-                                    decks= BJobj.decks,
-                                    seatsCount= BJobj.seatsCount
+                                    sidebet1=BJobj.sidebet1,
+                                    sidebet2=BJobj.sidebet2,
+                                    decks=BJobj.decks
                                 };
                                 await _casinoGodsDbContext.TablesList.AddAsync(newTable);
-                                await _casinoGodsDbContext.MyBlackJackTables.AddAsync(newBjTable);
                                 await _casinoGodsDbContext.SaveChangesAsync();
                                 return Ok();
                             }
                             else return BadRequest("Table with given name already exists");
-             
-                    case "edit":
-                        BlackjackTablesDatabase Table = await _casinoGodsDbContext.MyBlackJackTables.SingleOrDefaultAsync(play => play.table.name == BJobj.name);
-                        if (Table != null)
-                        {
-                            Table.table.minBet = BJobj.minBet; Table.table.maxBet = BJobj.maxBet; Table.table.betTime = BJobj.betTime; Table.actionTime = BJobj.actionTime;
-                            Table.sidebet1 = BJobj.sidebet1; Table.sidebet2 = BJobj.sidebet2; Table.decks = BJobj.decks; Table.seatsCount = BJobj.seatsCount;
-                            await _casinoGodsDbContext.SaveChangesAsync();
-                            return Ok();
-                        }
-                        else return BadRequest("Table not found"); 
 
-                    case "delete":
-                        var Table2 = await _casinoGodsDbContext.TablesList.SingleOrDefaultAsync(play => play.name == BJobj.name);
-                        var Table3 = await _casinoGodsDbContext.MyBlackJackTables.SingleOrDefaultAsync(play => play.table.name == BJobj.name);
-                        if (Table3 == null) { return BadRequest("Table not found"); }
-                        else
-                        {
-                            _casinoGodsDbContext.TablesList.Remove(Table2);
-                            _casinoGodsDbContext.MyBlackJackTables.Remove(Table3);
-                            
-                            await _casinoGodsDbContext.SaveChangesAsync();
-                            return Ok();
-                        }
-                
-                    default:
-                        return BadRequest("Wrong action Type");                   
+                        case "edit":
+                            var Table = await _casinoGodsDbContext.TablesList.Where(g=>g.CKGame==BJobj.gameType).SingleOrDefaultAsync(p => p.CKname == BJobj.name);
+                            if (Table != null)
+                            {
+                                Table.CKname = BJobj.name;Table.CKGame = gameObj.Name; Table.minBet = BJobj.minBet;Table.maxBet = BJobj.maxBet;Table.betTime = BJobj.betTime;
+                                Table.maxseats = BJobj.maxSeats;Table.actionTime = BJobj.actionTime;Table.sidebet1 = BJobj.sidebet1;Table.sidebet2 = BJobj.sidebet2;
+                                Table.decks = BJobj.decks;                               
+                                await _casinoGodsDbContext.SaveChangesAsync();
+                                return Ok();
+                            }
+                            else return BadRequest("Table not found");
+
+                        case "delete":
+                            var Table2 = await _casinoGodsDbContext.TablesList.Where(g => g.CKGame == BJobj.gameType).SingleOrDefaultAsync(play => play.CKname == BJobj.name);
+                            if (Table2 == null) { return BadRequest("Table not found"); }
+                            else
+                            {
+                                _casinoGodsDbContext.TablesList.Remove(Table2);
+                                await _casinoGodsDbContext.SaveChangesAsync();
+                                return Ok();
+                            }
+
+                        default:
+                            return BadRequest("Wrong action Type");
+                    }
                 }
+                else return BadRequest("Wrong table data");
             }
-            else return BadRequest("Wrong table data");        
+            else return BadRequest("Wrong game type");        
         }          
 
         [HttpGet, Authorize(Roles = "Admin")]
@@ -152,6 +149,5 @@ namespace CasinoGodsAPI.Controllers
             var player = await _casinoGodsDbContext.Players.ToListAsync();
             return Ok(player);
         }
-
     }
 }

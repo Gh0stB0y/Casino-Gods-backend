@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using CasinoGodsAPI.TablesModel;
 using CasinoGodsAPI.Services;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using CasinoGodsAPI.Hubs.TablesHubs;
 
 namespace CasinoGodsAPI.TablesModel
 {
@@ -26,6 +27,8 @@ namespace CasinoGodsAPI.TablesModel
         private readonly IConnectionMultiplexer _redis;
         private readonly IDatabase redisDbLogin, redisDbJwt, redisGuestBankrolls;
         public static List<ActiveTablesDatabase>ActiveTables;
+        protected static Dictionary<string, int> UserCountAtTablesDictionary = new Dictionary<string, int>();
+        protected static Dictionary<string, string> UserGroupDictionary = new Dictionary<string, string>();
         public LobbyHub(CasinoGodsDbContext CasinoGodsDbContext, IConfiguration configuration, IConnectionMultiplexer redis)
         {
             _casinoGodsDbContext = CasinoGodsDbContext;
@@ -70,9 +73,9 @@ namespace CasinoGodsAPI.TablesModel
         {
             var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
             var username = claimsIdentity.Claims.FirstOrDefault(c => c.Type == "Username").Value;
-            var bankroll = int.Parse(claimsIdentity.Claims.FirstOrDefault(c => c.Type == "Current bankroll").Value);
-            var profit = bankroll- int.Parse(claimsIdentity.Claims.FirstOrDefault(c => c.Type == "Initial bankroll").Value);
-            var role= claimsIdentity.Claims.FirstOrDefault(c => c.Type == "Role").Value;
+            var bankroll = int.Parse(claimsIdentity.Claims.SingleOrDefault(c => c.Type == "Current bankroll").Value);
+            var profit = bankroll- int.Parse(claimsIdentity.Claims.SingleOrDefault(c => c.Type == "Initial bankroll").Value);
+            var role= claimsIdentity.Claims.SingleOrDefault(c => c.Type == "Role").Value;
             if (username == null) Console.WriteLine("CRITICAL ERROR! USERNAME NOT FOUND");
             else
             {
@@ -83,6 +86,13 @@ namespace CasinoGodsAPI.TablesModel
                     else { player.bankroll = bankroll; player.profit += profit; await _casinoGodsDbContext.SaveChangesAsync(); }
                 }
             }
+            if(UserGroupDictionary[username]!=null)
+            {
+                string tableId = UserGroupDictionary[username];
+                UserGroupDictionary.Remove(username);
+                UserCountAtTablesDictionary[tableId]--;
+            }
+
             string report = username + " left the chat";
             await Clients.Others.SendAsync("ChatReports", report);
             await base.OnDisconnectedAsync(exception);
@@ -91,19 +101,33 @@ namespace CasinoGodsAPI.TablesModel
         public async Task GetTableData() { 
 
             var AllActiveTables=await _casinoGodsDbContext.ActiveTables.ToListAsync();
-            if (AllActiveTables.Count == 0) AllActiveTables=await AddBasicTables();
+            if (AllActiveTables.Count == 0) { UserCountAtTablesDictionary.Clear(); AllActiveTables = await AddBasicTables(); 
+                foreach (var table in AllActiveTables) UserCountAtTablesDictionary.Add(table.TableInstanceId.ToString(), 0); }
+            
             ActiveTables = AllActiveTables;
-            string type=this.GetType().Name.Replace("Lobby","");
+            
+          
+            string type=GetType().Name.Replace("Lobby","");
             var list = AllActiveTables.Where(g => g.Game == type);
             var listToSend = new List<LobbyTableDataDTO>();
             foreach (var table in list) listToSend.Add(new LobbyTableDataDTO(table));
             
             await Clients.Caller.SendAsync("TablesData", listToSend);
         }
-
+        public async Task<bool> CheckFullTable(string TableId)
+        {
+            int CurrentUsers = UserCountAtTablesDictionary[TableId];
+            int MaxUsers =  ActiveTables.SingleOrDefault(t => t.TableInstanceId.ToString() == TableId).maxseats;    
+            if (MaxUsers != default && MaxUsers != default)
+            {
+                if (CurrentUsers < MaxUsers) return true; 
+                else return false;
+            }
+            throw new HubException("Data error");
+        }
+        //DODAJE PO JEDNYM STOLE Z KAZDEGO TYPU OPISANEGO W TABLES DATABASE
         public async Task<List<ActiveTablesDatabase>> AddBasicTables()
         {
-            string Path = "Tables1";
             var NewTables = await _casinoGodsDbContext.TablesList.ToListAsync();
             var list=new List<ActiveTablesDatabase>();
             foreach (var table in NewTables) 
@@ -111,7 +135,6 @@ namespace CasinoGodsAPI.TablesModel
                 list.Add(new ActiveTablesDatabase
                 {
                     TableInstanceId = Guid.NewGuid(),
-                    TablePath = "/" + table.CKGame + Path,
                     Name = table.CKname,
                     Game = table.CKGame,
                     minBet = table.minBet,
@@ -126,8 +149,44 @@ namespace CasinoGodsAPI.TablesModel
             }
             foreach(var activeTable in list) { await _casinoGodsDbContext.ActiveTables.AddAsync(activeTable); }
             await _casinoGodsDbContext.SaveChangesAsync();
+
             return list;
         }         
+
+        public async Task EnterTable(string TableId,string jwt)
+        {
+            string newJWT = await GlobalFunctions.RefreshTokenGlobal(jwt, redisDbLogin, redisDbJwt, _configuration);
+            if (newJWT == null || newJWT == "Session expired, log in again" || newJWT == "Redis data error, log in again") { await Clients.Caller.SendAsync("Disconnect", newJWT); return; }
+            bool TableNotFull;
+            try { TableNotFull= await CheckFullTable(TableId); }
+            catch(HubException ex) { Console.WriteLine(ex.Message);return; }
+
+            if (TableNotFull)
+            {
+                var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
+                var username = claimsIdentity.Claims.FirstOrDefault(c => c.Type == "Username").Value;
+
+                UserGroupDictionary.Add(username, TableId);
+                UserCountAtTablesDictionary[TableId]++;
+            }
+            else { await Clients.Caller.SendAsync("ErrorMessages","Table is full"); }
+            await Clients.Caller.SendAsync("JwtUpdate", newJWT);
+            string report = "max seats: " + ActiveTables.SingleOrDefault(t => t.TableInstanceId.ToString() == TableId).maxseats.ToString() + " Current count: " + UserCountAtTablesDictionary[TableId].ToString();
+            Console.WriteLine(report);
+        }
+        public async Task QuitTable(string jwt)
+        {
+            string newJWT = await GlobalFunctions.RefreshTokenGlobal(jwt, redisDbLogin, redisDbJwt, _configuration);
+            if (newJWT == null || newJWT == "Session expired, log in again" || newJWT == "Redis data error, log in again") { await Clients.Caller.SendAsync("Disconnect", newJWT); return; }
+
+            var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
+            var username = claimsIdentity.Claims.FirstOrDefault(c => c.Type == "Username").Value;
+
+            string tableId = UserGroupDictionary[username];
+            UserGroupDictionary.Remove(username);
+            UserCountAtTablesDictionary[tableId]--;
+            await Clients.Caller.SendAsync("JwtUpdate", newJWT);
+        }
     }
     public class BacarratLobby :  LobbyHub
     {

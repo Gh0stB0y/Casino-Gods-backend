@@ -28,7 +28,6 @@ namespace CasinoGodsAPI.Models
         public LobbyTableDataDTO(ActiveTablesDatabase table)
         {
             Id = table.TableInstanceId.ToString();
-            TablePath = table.TablePath;
             Name = table.Name;
             Game = table.Game;
             minBet = table.minBet;

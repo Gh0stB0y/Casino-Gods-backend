@@ -101,7 +101,6 @@ namespace CasinoGodsAPI.Models
     {
         [Key]
         public Guid TableInstanceId { get; set; } = new Guid();
-        public string TablePath { get; set; } = string.Empty;
 
         public string Name { get; set; }
         public string Game { get; set; }
@@ -115,5 +114,4 @@ namespace CasinoGodsAPI.Models
         public int decks { get; set; } = 6;
         
     }
-
 }

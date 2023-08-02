@@ -1,5 +1,4 @@
 using CasinoGodsAPI.Data;
-using CasinoGodsAPI.Hubs.TablesHubs;
 using CasinoGodsAPI.Services;
 using CasinoGodsAPI.TablesModel;
 using Microsoft.AspNet.SignalR;
@@ -38,6 +37,12 @@ builder.Services.AddSignalR();
 builder.Services.AddControllers();
 
 builder.Services.AddHostedService<LobbyService>();
+/*builder.Services.AddHostedService<BacarratService>();
+builder.Services.AddHostedService<BlackjackService>();
+builder.Services.AddHostedService<DragonTigerService>();
+builder.Services.AddHostedService<RouletteService>();
+builder.Services.AddHostedService<WarService>();*/
+
 builder.Services.AddLogging(loggingBuilder =>
 {
     loggingBuilder.AddConsole();
@@ -91,7 +96,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseHttpsRedirection();
-//app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin().SetIsOriginAllowed((host) => true));
 app.UseCors();
 app.UseRouting();
 app.UseAuthentication();

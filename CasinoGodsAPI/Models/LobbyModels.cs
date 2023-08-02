@@ -24,6 +24,7 @@ namespace CasinoGodsAPI.Models
         public bool sidebets { get; set; } = true;
         public bool sidebet1 { get; set; } = true;
         public bool sidebet2 { get; set; } = true;
+        public int currentSeats { get; set; } = 0;
         public int maxSeats { get; set; } = 0;
         public LobbyTableDataDTO(ActiveTablesDatabase table)
         {

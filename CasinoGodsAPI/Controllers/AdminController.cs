@@ -78,7 +78,7 @@ namespace CasinoGodsAPI.Controllers
 
         [Route("ManageTable")]
         [HttpPost]
-        public async Task<IActionResult> ManageTable([FromBody]BlackjackTableDTO BJobj) {
+        public async Task<IActionResult> ManageTable([FromBody]TableDTO BJobj) {
 
  
             var gameObj = await _casinoGodsDbContext.GamesList.SingleOrDefaultAsync(g => g.Name == BJobj.gameType);

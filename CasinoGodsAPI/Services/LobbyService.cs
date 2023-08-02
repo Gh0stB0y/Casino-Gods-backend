@@ -31,7 +31,6 @@ namespace CasinoGodsAPI.Services
             var hubContexts = new Dictionary<Type, Microsoft.AspNetCore.SignalR.IHubContext<Microsoft.AspNetCore.SignalR.Hub>>();
             var hubTypes = Assembly.GetExecutingAssembly().GetTypes()
                 .Where(type => type.IsSubclassOf(typeof(LobbyHub)));
-
             foreach (var hubType in hubTypes)
             {
                 var hubContextType = typeof(Microsoft.AspNetCore.SignalR.IHubContext<>).MakeGenericType(hubType);
@@ -70,7 +69,12 @@ namespace CasinoGodsAPI.Services
                         List<ActiveTablesDatabase> list = new List<ActiveTablesDatabase>();
                         List<LobbyTableDataDTO> listToSend = new List<LobbyTableDataDTO>();
                         list = LobbyHub.ActiveTables.Where(g => g.Game == typ).ToList();
-                        foreach (var table in list) { listToSend.Add(new LobbyTableDataDTO(table)); }
+                        foreach (var table in list) 
+                        {
+                            var tableObj = new LobbyTableDataDTO(table);
+                            tableObj.currentSeats=LobbyHub.GetCurrentPlayers(tableObj.Id);
+                            listToSend.Add(tableObj); 
+                        }
                         await hubContext.Value.Clients.All.SendAsync("TablesData", listToSend);
                     }
                     await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
@@ -88,12 +92,5 @@ namespace CasinoGodsAPI.Services
             _cancellationTokenSource?.Cancel();
             await StopAsync(_cancellationTokenSource.Token);
         } //reczne wylaczenie
-        //
-     
-        //FUNKCJE CUSTOMOWE/POLECENIA DO WYKONANIA PRZY WYWOLANIU TIMERA
-
-        //
-    }
-
-    
+    }   
 }

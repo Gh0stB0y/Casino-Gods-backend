@@ -15,7 +15,7 @@ using Swashbuckle.AspNetCore.Filters;
 using System.Collections.Concurrent;
 using System.Text;
 using Microsoft.AspNetCore.Hosting;
-
+using CasinoGodsAPI.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,13 +35,8 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(opt =>
 
 builder.Services.AddSignalR();
 builder.Services.AddControllers();
-
 builder.Services.AddHostedService<LobbyService>();
-/*builder.Services.AddHostedService<BacarratService>();
-builder.Services.AddHostedService<BlackjackService>();
-builder.Services.AddHostedService<DragonTigerService>();
-builder.Services.AddHostedService<RouletteService>();
-builder.Services.AddHostedService<WarService>();*/
+builder.Services.AddHostedService<TableService>();
 
 builder.Services.AddLogging(loggingBuilder =>
 {
@@ -75,7 +70,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddDbContext<CasinoGodsDbContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("FullStackConnectionString")));
-
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>

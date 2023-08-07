@@ -28,8 +28,25 @@ namespace CasinoGodsAPI.Data
         public DbSet<GamesDatabase> GamesList { get; set; }
         public DbSet<GamePlusPlayer> GamePlusPlayersTable{ get; set; }
         public DbSet<TablesDatabase> TablesList { get; set; }
-        public DbSet<Dealer> Dealers { get; set; }
+        //public DbSet<Dealer> Dealers { get; set; }
         public DbSet<ActiveTablesDatabase>ActiveTables { get; set; }
 
+
+    }
+    public class CasinoGodsDbContextFactory : IDbContextFactory<CasinoGodsDbContext>
+    {
+        private readonly IConfiguration _configuration;
+
+        public CasinoGodsDbContextFactory(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
+        public CasinoGodsDbContext CreateDbContext()
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<CasinoGodsDbContext>();
+            optionsBuilder.UseSqlServer(_configuration.GetConnectionString("FullStackConnectionString"));
+            return new CasinoGodsDbContext(optionsBuilder.Options);
+        }
     }
 }

@@ -115,7 +115,7 @@ namespace CasinoGodsAPI.Controllers
                             var Table = await _casinoGodsDbContext.TablesList.Where(g=>g.CKGame==BJobj.gameType).SingleOrDefaultAsync(p => p.CKname == BJobj.name);
                             if (Table != null)
                             {
-                                Table.CKname = BJobj.name;Table.CKGame = gameObj.Name; Table.minBet = BJobj.minBet;Table.maxBet = BJobj.maxBet;Table.betTime = BJobj.betTime;
+                                /*Table.CKname = BJobj.name;*/Table.CKGame = gameObj.Name; Table.minBet = BJobj.minBet;Table.maxBet = BJobj.maxBet;Table.betTime = BJobj.betTime;
                                 Table.maxseats = BJobj.maxSeats;Table.actionTime = BJobj.actionTime;Table.sidebet1 = BJobj.sidebet1;Table.sidebet2 = BJobj.sidebet2;
                                 Table.decks = BJobj.decks;                               
                                 await _casinoGodsDbContext.SaveChangesAsync();

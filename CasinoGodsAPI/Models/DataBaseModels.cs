@@ -113,7 +113,5 @@ namespace CasinoGodsAPI.Models
         public bool sidebet2 { get; set; } = true;
         public int decks { get; set; } = 6;
 
-        public int UserCountAtTableDictionary = 0;
-        public string UsersAtTable = string.Empty;
     }
 }

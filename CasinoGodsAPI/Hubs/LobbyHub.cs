@@ -290,7 +290,7 @@ namespace CasinoGodsAPI.TablesModel
             TableService.UserGroupDictionary.TryRemove(username, out _);
             TableService.UserCountAtTablesDictionary[tableId]--;
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, tableId);
-            //if (TableService.UserCountAtTablesDictionary[tableId] < 1){TableService.MakeTableInactive(tableId); DeleteTableInstance(tableId);}
+            //if (TableService.UserCountAtTablesDictionary[tableId] < 1){ TableService.MakeTableInactive(tableId); DeleteTableInstance(tableId);}
             string tableReport = username + " has left the table";
             await Clients.OthersInGroup(tableId).SendAsync("TableChatReports", tableReport);
             await Clients.Caller.SendAsync("JwtUpdate", newJWT);
@@ -326,10 +326,10 @@ namespace CasinoGodsAPI.TablesModel
                     {
                         if (!TableService.ManagedTablesObj[TableId].IsBettingListVoid(Bets)&& !TableService.ManagedTablesObj[TableId].AllBetsPlaced.ContainsKey(UsernameClaim.Value)) //bet are open, and betting list is valid
                         {
-                            var bankrollAvailable = await _casinoGodsDbContext.Players.FirstOrDefaultAsync(u => u.username == UsernameClaim.Value);
-                            if (bankrollAvailable != null)
-                            {
-                                if (bankrollAvailable.bankroll >= Bets.Sum()) { 
+                            //var bankrollAvailable = await _casinoGodsDbContext.Players.FirstOrDefaultAsync(u => u.username == UsernameClaim.Value);
+                            //if (bankrollAvailable != null)
+                            //{
+                                //if (bankrollAvailable.bankroll >= Bets.Sum()) 
                                     Console.WriteLine(UsernameClaim.Value + " List uploaded");
                                     TableService.ManagedTablesObj[TableId].UserInitialBetsDictionary[UsernameClaim.Value] = Bets;
                                     TableService.ManagedTablesObj[TableId].AllBetsPlaced.TryAdd(UsernameClaim.Value, true);
@@ -350,10 +350,10 @@ namespace CasinoGodsAPI.TablesModel
                                         int playersremaining = TableService.UserCountAtTablesDictionary[TableId] - TableService.ManagedTablesObj[TableId].AllBetsPlaced.Count;
                                         await Clients.Caller.SendAsync($"TableChatReports", "Your bets are sent. Waiting for " + playersremaining + " player(s) to start game immediately");
                                     }
-                                }
-                                else Console.WriteLine("Not enough cash");
-                            }
-                            else Console.WriteLine("Bankroll from Database error");
+                                
+                                //else Console.WriteLine("Not enough cash");
+                            //}
+                            //else Console.WriteLine("Bankroll from Database error");
                         }
                         else if (!TableService.ManagedTablesObj[TableId].IsBettingListVoid(Bets) && TableService.ManagedTablesObj[TableId].AllBetsPlaced.ContainsKey(UsernameClaim.Value))
                         { Console.WriteLine("Bets already placed");}

@@ -74,6 +74,8 @@ namespace CasinoGodsAPI.Models
         public ConcurrentDictionary<string, int> UserWinnings = new ConcurrentDictionary<string, int>();
         private ActiveTablesDatabase ActiveTable= new ActiveTablesDatabase();
 
+        public bool GameInProgress = false;
+
         private Dictionary<Type, Func<Task>> PlayingPhaseMethod = new Dictionary<Type, Func<Task>>();
         private readonly IServiceProvider _serviceProvider;
         private readonly IConfiguration _configuration;
@@ -114,11 +116,12 @@ namespace CasinoGodsAPI.Models
         {
             while (IsActive) {                
                 Console.WriteLine("New game:");
+                GameInProgress = true;
                 await BettingPhase();
                 await PlayingPhaseMethod[TableType]();
                 await ResultPhase();
    
-                await Task.Delay(5000);
+                GameInProgress=false;
             } 
         }
 
@@ -151,7 +154,7 @@ namespace CasinoGodsAPI.Models
                 await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("ToggleBetting", false, ClosedBetsToken);//blokuje betowanie, pokazuje animacje losowania 
             }
             GameIsBeingPlayedRightNow = true;
-            await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Game Starts!");
+            await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Game Starts! Ball is released!");
         }
         
 
@@ -230,10 +233,11 @@ namespace CasinoGodsAPI.Models
         }
         public async Task RoulettePlayingPhase()
         {
-            await Task.Delay(TimeSpan.FromSeconds(3)); //symulacja krecenia sie kulki
             Random random = new Random();
-            //int WinningNumber = random.Next(0, 37);
-            int WinningNumber = 2;
+            int WinningNumber = random.Next(0, 37);
+            await Task.Delay(TimeSpan.FromSeconds(10)); //symulacja krecenia sie kulki
+            await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Winning number: "+ WinningNumber);
+            //await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("Winning number",WinningNumber);
             RouletteConvertBettingLists();
             Console.WriteLine("Wylosowana liczba: " + WinningNumber);
             foreach (var player in UserFinalBets) UserWinnings.TryAdd(player.Key, player.Value[WinningNumber]);            
@@ -403,7 +407,7 @@ namespace CasinoGodsAPI.Models
             await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Players with biggest winnings this round:" + string.Join(", ", MaxPlayers));
             GameIsBeingPlayedRightNow = false;
             if (TableService.UserCountAtTablesDictionary[Id] < 1) { TableService.MakeTableInactive(Id); LobbyHub.DeleteTableInstance(Id); }
-
+            else IsActive = true;
         }
         private async Task UserClaimUpdate()
         {

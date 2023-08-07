@@ -19,13 +19,8 @@ namespace CasinoGodsAPI.Services
         private CancellationTokenSource _cancellationTokenSource;
         private static IServiceProvider _serviceProvider;
         private static IConfiguration _configuration;
-        private static IConnectionMultiplexer _redis;
-        //public readonly CasinoGodsDbContext _casinoGodsDbContext;
-
-        //public static readonly Dictionary<string, Type> Types = new Dictionary<string, Type>() {{"Bacarrat",typeof(BacarratLobby)},{"Blackjack",typeof(BlackjackLobby)},{"Dragon Tiger",typeof(DragonTigerLobby)},{"Roulette",typeof(RouletteLobby)},{"War",typeof(WarLobby)} };
-
-        //public static ConcurrentDictionary<string, Type> ManagedTables=new ConcurrentDictionary<string, Type>();
-        //public static ConcurrentDictionary<string,bool>IsTableActive=new ConcurrentDictionary<string,bool>();      
+        private static IConnectionMultiplexer _redis; 
+   
         public static ConcurrentDictionary<string, ManageTableClass> ManagedTablesObj = new ConcurrentDictionary<string, ManageTableClass>();
         public static ConcurrentDictionary<string, int> UserCountAtTablesDictionary = new ConcurrentDictionary<string, int>();
         public static ConcurrentDictionary<string, string> UserGroupDictionary = new ConcurrentDictionary<string, string>();        
@@ -93,8 +88,12 @@ namespace CasinoGodsAPI.Services
         
         public static void MakeTableActive(string TableId)
         {
+            if (!ManagedTablesObj[TableId].IsActive && !ManagedTablesObj[TableId].GameInProgress)
+            {
                 ManagedTablesObj[TableId].IsActive = true;
-                Task.Run(() => ManagedTablesObj[TableId].StartGame());            
+                Task.Run(() => ManagedTablesObj[TableId].StartGame());
+                //ManagedTablesObj[TableId].StartGame();
+            }
         }
         public static void MakeTableInactive(string TableId)
         {

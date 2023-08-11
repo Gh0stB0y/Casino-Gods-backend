@@ -123,6 +123,8 @@ namespace CasinoGodsAPI.TablesModel
             else{AllActiveTables = ActiveTables;}
             
             string type=GetType().Name.Replace("Lobby","");
+            Console.WriteLine(type);
+            if (type == "DragonTiger") type = "Dragon Tiger";
             var list = ActiveTables.Where(g => g.Game == type);
             var listToSend = new List<LobbyTableDataDTO>();
             foreach (var table in list) 
@@ -297,7 +299,8 @@ namespace CasinoGodsAPI.TablesModel
         }
         public static int GetCurrentPlayers(string id)
         {
-            return TableService.UserCountAtTablesDictionary[id];
+            return 0;
+            //return TableService.UserCountAtTablesDictionary[id];
         }
         public async Task PlaceBet(string jwt, string TableId,List<int>bets)
         {

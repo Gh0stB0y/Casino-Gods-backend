@@ -71,8 +71,13 @@ namespace CasinoGodsAPI.Models
         public ConcurrentDictionary<string, bool> AllBetsPlaced = new ConcurrentDictionary<string, bool>();//represents if all players agree to play 
         public ConcurrentDictionary<string,List<int>>UserInitialBetsDictionary=new ConcurrentDictionary<string, List<int>>(); //represent list sent by users, those list are one before converting
         public ConcurrentDictionary<string, List<int>> UserFinalBets = new ConcurrentDictionary<string, List<int>>();//represents final betting list, used in roulette games index from 0 to 36
-        public ConcurrentDictionary<string, int> UserWinnings = new ConcurrentDictionary<string, int>();
+        public ConcurrentDictionary<string, int> UserWinnings = new ConcurrentDictionary<string, int>(); //represents how much user won during a single game
         private ActiveTablesDatabase ActiveTable= new ActiveTablesDatabase();
+
+        //private List<int> ShuffledDeck = new List<int>();
+        private Stack<int> ShuffledDeck = new Stack<int>();
+        private int CardsPlayed=0;
+        private int RedCard=0;
 
         public bool GameInProgress = false;
 
@@ -102,8 +107,61 @@ namespace CasinoGodsAPI.Models
             //redisGuestBankrolls = _redis.GetDatabase(2);
             PlayingPhaseMethod = new Dictionary<Type, Func<Task>>() {
             { typeof(BacarratLobby),BacarratPlayingPhase },{ typeof(BlackjackLobby),BlackjackPlayingPhase }, { typeof(DragonTigerLobby), DragonTigerPlayingPhase },
-            { typeof(RouletteLobby),RoulettePlayingPhase}, { typeof(WarLobby),WarPlayingPhase } };
+            { typeof(RouletteLobby),RoulettePlayingPhase}, { typeof(WarLobby),WarPlayingPhase } };           
+        }
+        private void ShuffleDecks(int NumberOfDecks)
+        {
+            ShuffledDeck.Clear();
+            //List<int> CardsStorage = Enumerable.Repeat(NumberOfDecks, 10).ToList();
+            List<int> CardsStorage = Enumerable.Repeat(NumberOfDecks, 52).ToList();
+            List<int> AvailableCards = new List<int>();
+            for(int j=0;j<52;j++)AvailableCards.Add(j);
+            Random RandomObj= new Random();
+            int RandomCardValue;
 
+
+            //Console.WriteLine("Storage:");
+            //int iterator = 0;
+            //foreach(var storage  in CardsStorage) { Console.WriteLine(iterator+": "+storage);iterator++; }
+            //Console.WriteLine("Available Card Values:");
+            //foreach(var CardValues in AvailableCards) { Console.WriteLine(CardValues); }
+            if (NumberOfDecks > 0) {
+                //Console.WriteLine("LOOP START");
+                for (int j = 0; j < 52*NumberOfDecks; j++)
+                {
+                    //Console.WriteLine("COUNT: " + AvailableCards.Count);
+                    RandomCardValue = RandomObj.Next(0, AvailableCards.Count);
+                    CardsStorage[AvailableCards[RandomCardValue]]--;
+                    //ShuffledDeck.Add(AvailableCards[RandomCardValue]);
+                    ShuffledDeck.Push(AvailableCards[RandomCardValue]);
+                    //Console.WriteLine(ShuffledDeck.Last().ToString());
+                    //Console.WriteLine(ShuffledDeck.Peek().ToString());
+                    if (CardsStorage[AvailableCards[RandomCardValue]] == 0) AvailableCards.RemoveAt(RandomCardValue);
+
+                    //Console.WriteLine("Storage:");
+                    //iterator = 0;
+                    //foreach (var storage in CardsStorage) { Console.WriteLine(iterator + ": " + storage); iterator++; }
+                    //Console.WriteLine("Available Card Values:");
+                    //foreach (var CardValues in AvailableCards) { Console.WriteLine(CardValues); }
+                }
+                CardsPlayed = 0;
+                double RedCardPercent = RandomObj.Next(600, 850) * 52 * NumberOfDecks / 1000;// * 52 * NumberOfDecks;
+                RedCard = (int)Math.Floor(RedCardPercent);
+                Console.WriteLine("RedCard: " + RedCard);
+                //foreach (var Cards in ShuffledDeck)Console.WriteLine(Cards);
+            }
+        }
+        private List<int> CardsOnBoards(int howManyCards)
+        {
+            List<int>ListToSend= new List<int>();
+            
+            for (int i = 0; i < howManyCards; i++)
+            {
+                ListToSend.Add(ShuffledDeck.Peek());
+                CardsPlayed++;
+                ShuffledDeck.Pop();
+            }
+            return ListToSend;
         }
         ~ManageTableClass()
         {
@@ -114,6 +172,7 @@ namespace CasinoGodsAPI.Models
         }
         public async Task StartGame()
         {
+            if (TableType == typeof(BacarratLobby) || TableType == typeof(BlackjackLobby)|| TableType == typeof(DragonTigerLobby)) ShuffleDecks(ActiveTable.decks);
             while (IsActive) {                
                 Console.WriteLine("New game:");
                 GameInProgress = true;
@@ -154,7 +213,7 @@ namespace CasinoGodsAPI.Models
                 await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("ToggleBetting", false, ClosedBetsToken);//blokuje betowanie, pokazuje animacje losowania 
             }
             GameIsBeingPlayedRightNow = true;
-            await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Game Starts! Ball is released!");
+            
         }
         
 
@@ -229,10 +288,34 @@ namespace CasinoGodsAPI.Models
         }
         private async Task DragonTigerPlayingPhase()
         {
+            await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Game Starts!");
+            Random random = new Random();
+            List<int> Cards = CardsOnBoards(2);
+            List<double> CardsVal =new List<double>() { Math.Floor((double)Cards[0] / 4), Math.Floor((double)Cards[1] / 4) };
+            List<int> CardsColor = new List<int>() { Cards[0] % 4, Cards[1] % 4 };
 
+
+            int WinningPlace;
+            string report = string.Empty;
+            if (CardsVal[0] > CardsVal[1]) { report = "Dragon Wins!"; WinningPlace = 0; }
+            else if (CardsVal[1] > CardsVal[0]) { report = "Tiger Wins!"; WinningPlace = 1; }
+            else
+            {
+                if (CardsColor[0] == CardsColor[1]) { report = "Suited Tie!"; WinningPlace = 3; }
+                else { report = "Tie!"; WinningPlace = 2; }
+            }
+            await Task.Delay(TimeSpan.FromSeconds(ActiveTable.actionTime));
+            await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("Cards", Cards, report);
+            DragonTigerConvertBettingLists();
+            //await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", report);
+
+
+            foreach (var player in UserFinalBets) UserWinnings.TryAdd(player.Key, player.Value[WinningPlace]);
+            await Task.Delay(TimeSpan.FromSeconds(5));
         }
         public async Task RoulettePlayingPhase()
         {
+            await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Game Starts! Ball is released!");
             Random random = new Random();
             int WinningNumber = random.Next(0, 37);
             await Task.Delay(TimeSpan.FromSeconds(10)); //symulacja krecenia sie kulki
@@ -386,6 +469,24 @@ namespace CasinoGodsAPI.Models
                 }
             }
         }
+        private void DragonTigerConvertBettingLists()
+        {
+            foreach (var BetList in UserInitialBetsDictionary)
+            {
+                if (BetList.Value.Count == 4)
+                {
+                    List<int> FinalList = new List<int>();
+                    FinalList = Enumerable.Repeat(0, 4).ToList();
+                    int i = 0;
+
+                    for(i=0; i < 2; i++) FinalList[i] += 2 * BetList.Value[i];
+                    for (i = 2; i < 3; i++) FinalList[i] += 12 * BetList.Value[i];
+                    for (i = 3; i < 4; i++) FinalList[i] += 51 * BetList.Value[i];
+                    UserFinalBets.TryAdd(BetList.Key, FinalList);
+                }
+
+            }
+        }
         /////////////////////////////////////////////////////////////////// RESULT PHASE /////////////////////////////////////////////////////////////////////////
         private async Task ResultPhase()
         {
@@ -405,6 +506,12 @@ namespace CasinoGodsAPI.Models
                 else { Console.WriteLine(player.Key + " chuja wygral"); }
             }
             await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Players with biggest winnings this round:" + string.Join(", ", MaxPlayers));
+            if (CardsPlayed >= RedCard) 
+            {
+                await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Shuffling cards, please wait...");
+                ShuffleDecks(ActiveTable.decks);
+                await Task.Delay(TimeSpan.FromSeconds(5));
+            }
             GameIsBeingPlayedRightNow = false;
             if (TableService.UserCountAtTablesDictionary[Id] < 1) { TableService.MakeTableInactive(Id); LobbyHub.DeleteTableInstance(Id); }
             else IsActive = true;

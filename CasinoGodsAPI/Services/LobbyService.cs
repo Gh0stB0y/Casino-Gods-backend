@@ -64,18 +64,22 @@ namespace CasinoGodsAPI.Services
                 {
                     foreach (var hubContext in _hubContexts)
                     {
-                        string typ = hubContext.Key.Name.Replace("Lobby", "");
-                        if (typ == "DragonTiger") typ = "Dragon Tiger";
-                        List<ActiveTablesDatabase> list = new List<ActiveTablesDatabase>();
-                        List<LobbyTableDataDTO> listToSend = new List<LobbyTableDataDTO>();
-                        list = LobbyHub.ActiveTables.Where(g => g.Game == typ).ToList();
-                        foreach (var table in list) 
+                        try
                         {
-                            var tableObj = new LobbyTableDataDTO(table);
-                            tableObj.currentSeats=LobbyHub.GetCurrentPlayers(tableObj.Id);
-                            listToSend.Add(tableObj); 
+                            string typ = hubContext.Key.Name.Replace("Lobby", "");
+                            if (typ == "DragonTiger") typ = "Dragon Tiger";
+                            List<ActiveTablesDatabase> list = new List<ActiveTablesDatabase>();
+                            List<LobbyTableDataDTO> listToSend = new List<LobbyTableDataDTO>();
+                            list = LobbyHub.ActiveTables.Where(g => g.Game == typ).ToList();
+                            foreach (var table in list)
+                            {
+                                var tableObj = new LobbyTableDataDTO(table);
+                                tableObj.currentSeats = LobbyHub.GetCurrentPlayers(tableObj.Id);
+                                listToSend.Add(tableObj);
+                            }
+                            await hubContext.Value.Clients.All.SendAsync("TablesData", listToSend);
                         }
-                        await hubContext.Value.Clients.All.SendAsync("TablesData", listToSend);
+                        catch (Exception ex) { Console.WriteLine(ex); }
                     }
                     await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
                 }

@@ -1,6 +1,8 @@
-﻿namespace CasinoGodsAPI.Commands.Controllers.PlayerController
+﻿using MediatR;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CasinoGodsAPI.Commands.Controllers.PlayerController
 {
-    public class MakeGuestCommand
-    {
-    }
+    public record MakeGuestCommand():IRequest<IActionResult>;
+    
 }

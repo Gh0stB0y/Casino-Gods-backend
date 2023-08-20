@@ -32,7 +32,7 @@ namespace CasinoGodsAPI.TablesModel
         protected readonly CasinoGodsDbContext _casinoGodsDbContext;
         private readonly IConfiguration _configuration;
         private readonly IConnectionMultiplexer _redis;
-        private readonly IDatabase redisDbLogin, redisDbJwt, redisGuestBankrolls;
+        private readonly IDatabase redisDbLogin, redisDbJwt;//, redisGuestBankrolls;
 
         public static List<ActiveTablesDB>ActiveTables;
         
@@ -43,7 +43,7 @@ namespace CasinoGodsAPI.TablesModel
             _redis = redis;
             redisDbLogin = _redis.GetDatabase(0);
             redisDbJwt = _redis.GetDatabase(1);
-            redisGuestBankrolls = _redis.GetDatabase(2);
+            //redisGuestBankrolls = _redis.GetDatabase(2);
         }
         
         public override async Task OnConnectedAsync()
@@ -60,7 +60,7 @@ namespace CasinoGodsAPI.TablesModel
             var jwtSecurityToken = tokenHandler.ReadJwtToken(newJWT);
             string UserRole = jwtSecurityToken.Claims.SingleOrDefault(c => c.Type == ClaimTypes.Role).Value;
             string bankroll;
-            if (UserRole == "Guest") bankroll = await redisGuestBankrolls.StringGetAsync(paramUName);
+            if (UserRole == "Guest") bankroll = 1000.ToString();
             else bankroll = _casinoGodsDbContext.Players.Where(c => c.Username == paramUName).Select(p => p.Bankroll).FirstOrDefaultAsync().Result.ToString();
             var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
             var Claims = new List<Claim>()

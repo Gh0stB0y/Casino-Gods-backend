@@ -1,6 +1,8 @@
-﻿namespace CasinoGodsAPI.Commands.Controllers.PlayerController
+﻿using CasinoGodsAPI.DTOs;
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CasinoGodsAPI.Commands.Controllers.PlayerController
 {
-    public class SignInCommand
-    {
-    }
+    public record SignInCommand(SignInDTO Player):IRequest<IActionResult>;
 }

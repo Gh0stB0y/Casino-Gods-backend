@@ -38,10 +38,9 @@
     <Folder Include="Commands\GameServices\" />
     <Folder Include="Commands\SignalR\" />
     <Folder Include="Migrations\" />
-    <Folder Include="Handlers\" />
+    <Folder Include="Models\ControllerModels\" />
     <Folder Include="Queries\BackgroundServices\" />
     <Folder Include="Queries\Controllers\AdminController\" />
-    <Folder Include="Queries\Controllers\PlayerController\" />
     <Folder Include="Queries\GameServices\" />
     <Folder Include="Queries\SignalR\" />
   </ItemGroup>

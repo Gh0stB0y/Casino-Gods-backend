@@ -1,6 +1,8 @@
-﻿namespace CasinoGodsAPI.Commands.Controllers.PlayerController
+﻿using CasinoGodsAPI.DTOs;
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CasinoGodsAPI.Commands.Controllers.PlayerController
 {
-    public class RecoveryEmailCommand
-    {
-    }
+    public record RecoveryEmailCommand(EmailDTO Email):IRequest<IActionResult>;
 }

@@ -37,7 +37,6 @@ namespace CasinoGodsAPI.Models.DatabaseModels
             rngCrypt.GetBytes(rgb);
             return Convert.ToBase64String(rgb);
         }
-
         public static void SendRecoveryEmail(string email, string newPassword)
         {
             var recEmail = new MimeMessage();
@@ -49,7 +48,7 @@ namespace CasinoGodsAPI.Models.DatabaseModels
             using (var smtp = new SmtpClient())
             {
                 smtp.Connect("smtp.wp.pl", 465, SecureSocketOptions.SslOnConnect);
-                smtp.Authenticate("kapi38134@wp.pl", "dorsz1");
+                smtp.Authenticate("kapi38134@wp.pl", "DeprecCod24");
                 smtp.Send(recEmail);
                 smtp.Disconnect(true);
             }
@@ -76,7 +75,6 @@ namespace CasinoGodsAPI.Models.DatabaseModels
                 signingCredentials: credentials
                 );
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);
-            //string jsonString = JsonSerializer.Serialize(jwt);
 
             return jwt;
         }

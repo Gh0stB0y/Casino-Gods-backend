@@ -1,4 +1,5 @@
 ﻿using CasinoGodsAPI.Databases;
+using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis;
 
 namespace CasinoGodsAPI.Models

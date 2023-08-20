@@ -32,13 +32,13 @@ namespace CasinoGodsAPI.Models
             Id = table.TableInstanceId.ToString();
             Name = table.Name;
             Game = table.Game;
-            minBet = table.minBet;
-            maxBet = table.maxBet;
-            betTime = table.betTime;
-            maxSeats = table.maxseats;
-            sidebet1 = table.sidebet1;
-            sidebet2 = table.sidebet2;
-            if (table.sidebet1 == true || table.sidebet2 == true) sidebets = true;
+            minBet = table.MinBet;
+            maxBet = table.MaxBet;
+            betTime = table.BetTime;
+            maxSeats = table.Maxseats;
+            sidebet1 = table.Sidebet1;
+            sidebet2 = table.Sidebet2;
+            if (table.Sidebet1 == true || table.Sidebet2 == true) sidebets = true;
             else sidebets = false;
         }
         public LobbyTableDataDTO(LobbyTableData baseObj)
@@ -49,13 +49,13 @@ namespace CasinoGodsAPI.Models
             TablePath = baseObj.TablePath;
             Name = baseObj.TableType.CKname;
             Game = baseObj.TableType.CKGame;
-            minBet = baseObj.TableType.minBet;
-            maxBet = baseObj.TableType.maxBet;
-            betTime = baseObj.TableType.betTime;
-            maxSeats = baseObj.TableType.maxseats;
-            sidebet1= baseObj.TableType.sidebet1;
-            sidebet2 = baseObj.TableType.sidebet2;
-            if (baseObj.TableType.sidebet1 == true || baseObj.TableType.sidebet2 == true) sidebets = true;
+            minBet = baseObj.TableType.MinBet;
+            maxBet = baseObj.TableType.MaxBet;
+            betTime = baseObj.TableType.BetTime;
+            maxSeats = baseObj.TableType.Maxseats;
+            sidebet1= baseObj.TableType.Sidebet1;
+            sidebet2 = baseObj.TableType.Sidebet2;
+            if (baseObj.TableType.Sidebet1 == true || baseObj.TableType.Sidebet2 == true) sidebets = true;
             else sidebets=false;
         }
     }

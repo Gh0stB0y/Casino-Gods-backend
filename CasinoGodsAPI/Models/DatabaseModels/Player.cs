@@ -9,25 +9,25 @@ using System.Security.Cryptography;
 
 namespace CasinoGodsAPI.Models.DatabaseModels
 {
-    public class Player
+    public class Player 
     {
         [Key]
         public Guid Id { get; set; }
-        public string username { get; set; } = string.Empty;
-        public string email { get; set; } = string.Empty;
-        public string password { get; set; } = "";
-        public int bankroll { get; set; } = 5000;
-        public int profit { get; set; } = 0;
-        public DateTime birthdate { get; set; }
-        public byte[] passSalt { get; set; }
-        public byte[] passHash { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = "";
+        public int Bankroll { get; set; } = 5000;
+        public int Profit { get; set; } = 0;
+        public DateTime Birthdate { get; set; }
+        public byte[] PassSalt { get; set; }
+        public byte[] PassHash { get; set; }
 
-        public void hashPass(string password)
+        public void HashPass(string password)
         {
             using (var hmac = new HMACSHA512())
             {
-                this.passSalt = hmac.Key;
-                this.passHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                this.PassSalt = hmac.Key;
+                this.PassHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
             }
         }
         public static string GetRandomPassword(int length)
@@ -38,7 +38,7 @@ namespace CasinoGodsAPI.Models.DatabaseModels
             return Convert.ToBase64String(rgb);
         }
 
-        public static void sendRecoveryEmail(string email, string newPassword)
+        public static void SendRecoveryEmail(string email, string newPassword)
         {
             var recEmail = new MimeMessage();
             recEmail.From.Add(MailboxAddress.Parse("kapi38134@wp.pl"));
@@ -59,12 +59,12 @@ namespace CasinoGodsAPI.Models.DatabaseModels
             List<Claim> claims = new List<Claim>();
             if (uname == "guest")
             {
-                claims.Add(new Claim(ClaimTypes.Name, this.username));
+                claims.Add(new Claim(ClaimTypes.Name, this.Username));
                 claims.Add(new Claim(ClaimTypes.Role, "Guest"));
             }
             else
             {
-                claims.Add(new Claim(ClaimTypes.Name, this.username));
+                claims.Add(new Claim(ClaimTypes.Name, this.Username));
                 claims.Add(new Claim(ClaimTypes.Role, "Player"));
             }
 

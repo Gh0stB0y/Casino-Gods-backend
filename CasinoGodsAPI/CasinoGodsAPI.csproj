@@ -34,10 +34,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Commands\BackgroundServices\" />
+    <Folder Include="Commands\GameServices\" />
+    <Folder Include="Commands\SignalR\" />
     <Folder Include="Migrations\" />
     <Folder Include="Handlers\" />
-    <Folder Include="DTOs\" />
-    <Folder Include="Queries\" />
+    <Folder Include="Queries\BackgroundServices\" />
+    <Folder Include="Queries\Controllers\AdminController\" />
+    <Folder Include="Queries\Controllers\PlayerController\" />
+    <Folder Include="Queries\GameServices\" />
+    <Folder Include="Queries\SignalR\" />
   </ItemGroup>
 
 </Project>

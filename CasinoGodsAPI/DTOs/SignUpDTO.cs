@@ -1,19 +1,6 @@
-﻿using MailKit.Security;
-using MimeKit;
-using System.Security.Cryptography;
-using MailKit.Net.Smtp;
-using System.Security.Claims;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Text.Json;
-
-using System.ComponentModel.DataAnnotations;
-using StackExchange.Redis;
-
-namespace CasinoGodsAPI.Models
+﻿namespace CasinoGodsAPI.DTOs
 {
-    
-    public class PlayerSignUp
+    public class SignUpDTO
     {
         public string username { get; set; } = string.Empty;
         public string email { get; set; } = string.Empty;
@@ -21,7 +8,7 @@ namespace CasinoGodsAPI.Models
         public string password { get; set; } = string.Empty;
 
 
-        public static string CheckSignUpCredentials(PlayerSignUp p)
+        public static string CheckSignUpCredentials(SignUpDTO p)
         {
             string response = "";
             if (p.password.Length < 8) response = ("Password too short");
@@ -38,7 +25,7 @@ namespace CasinoGodsAPI.Models
             return response;
         }
 
-        private static bool ageGood(PlayerSignUp p)
+        private static bool ageGood(SignUpDTO p)
         {
             if ((p.birthdate.Year + 18) < DateTime.Today.Year) return true;
             else if ((p.birthdate.Year + 18) == DateTime.Today.Year)
@@ -53,7 +40,7 @@ namespace CasinoGodsAPI.Models
             }
             else return false;
         }
-        private static bool passNumGood(PlayerSignUp p)
+        private static bool passNumGood(SignUpDTO p)
         {
             int res;
             bool numExist = false;
@@ -63,11 +50,11 @@ namespace CasinoGodsAPI.Models
             }
             return numExist;
         }
-        private static bool specialLetterGood(PlayerSignUp p)
+        private static bool specialLetterGood(SignUpDTO p)
         {
             return p.password.Any(ch => !char.IsLetterOrDigit(ch));
         }
-        private static bool checkUppercase(PlayerSignUp p)
+        private static bool checkUppercase(SignUpDTO p)
         {
             bool upperExist = false;
             foreach (char character in p.password)
@@ -76,7 +63,7 @@ namespace CasinoGodsAPI.Models
             }
             return upperExist;
         }
-        private static bool checkLowecase(PlayerSignUp p)
+        private static bool checkLowecase(SignUpDTO p)
         {
             bool lowerExist = false;
             foreach (char character in p.password)
@@ -85,19 +72,5 @@ namespace CasinoGodsAPI.Models
             }
             return lowerExist;
         }
-    }
-    public class PlayerSignIn
-    {
-        public string username { get; set; } = string.Empty;
-        public string password { get; set; } = string.Empty;
-
-    }
-    public class JwtClass
-    {
-        public string jwtString { get; set; } = string.Empty;
-    }
-    public class EmailRecovery
-    {
-        public string emailRec { get; set; } = string.Empty;
     }
 }

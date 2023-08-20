@@ -23,35 +23,7 @@ using System.Threading;
 
 namespace CasinoGodsAPI.Models
 {
-    public class TableDTO  //DTO do zarzadzania stolem przez admina
-    {
-        public string gameType { get; set; } = string.Empty;
-        public string actionType { get; set; } = string.Empty;
-        public string name { get; set; }
-        public int minBet { get; set; } = 0;
-        public int maxBet { get; set; } = 100000;
-        public int betTime { get; set; } = 30;
-        public int actionTime { get; set; } = 15;
-        public bool sidebet1 { get; set; } = true;
-        public bool sidebet2 { get; set; } = true;
-        public int decks { get; set; } = 6;
-        public int maxSeats { get; set; } = 6;
-        public bool CheckTable()
-        {
-            if (
-                name == null ||
-                minBet < 0 ||
-                maxBet < minBet ||
-                betTime < 0 ||
-                actionTime < 0 ||
-                decks < 1 ||
-                decks > 10 ||
-                maxSeats < 1 ||
-                maxSeats > 10) return false;
-            else return true;
-        }
-    }
-
+    
     public class ManageTableClass
     {
         //kazdy obiekt reprezentuje stol do gry
@@ -92,7 +64,7 @@ namespace CasinoGodsAPI.Models
         {
             Id = TableId;
             ActiveTable = LobbyHub.ActiveTables.FirstOrDefault(t => t.TableInstanceId.ToString() == TableId);
-            for (int i = 0; i < ActiveTable.maxseats; i++)
+            for (int i = 0; i < ActiveTable.Maxseats; i++)
             {
                 var mytype = Types.FirstOrDefault(i => i.Key == Game).Value;                
                 if (mytype != null) TableType = mytype;
@@ -173,7 +145,7 @@ namespace CasinoGodsAPI.Models
         }
         public async Task StartGame()
         {
-            if (TableType == typeof(BacarratLobby) || TableType == typeof(BlackjackLobby)|| TableType == typeof(DragonTigerLobby)) ShuffleDecks(ActiveTable.decks);
+            if (TableType == typeof(BacarratLobby) || TableType == typeof(BlackjackLobby)|| TableType == typeof(DragonTigerLobby)) ShuffleDecks(ActiveTable.Decks);
             while (IsActive) {                
                 Console.WriteLine("New game:");
                 GameInProgress = true;
@@ -194,8 +166,8 @@ namespace CasinoGodsAPI.Models
             BetsClosed = false;
             List<int> BettingTimes = new List<int>();
             
-            if (TableType == typeof(RouletteLobby)) BettingTimes = SplitBettingTime(ActiveTable.betTime);
-            else BettingTimes.Add(ActiveTable.betTime);
+            if (TableType == typeof(RouletteLobby)) BettingTimes = SplitBettingTime(ActiveTable.BetTime);
+            else BettingTimes.Add(ActiveTable.BetTime);
             
             await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("ToggleBetting",true,""); //odblokowuje betowanie, restuje layout,startuje betowanie
 
@@ -236,7 +208,7 @@ namespace CasinoGodsAPI.Models
         }
         private async Task LookForInactivePlayers(string TableId)
         {
-            List<bool> ActivePlayers = Enumerable.Repeat(true, ActiveTable.maxseats).ToList();
+            List<bool> ActivePlayers = Enumerable.Repeat(true, ActiveTable.Maxseats).ToList();
 
             var users = TableService.UserGroupDictionary.Where(t => t.Value == Id).Select(u=>u.Key).ToList();
             if (users.Count > ActivePlayers.Count) { Console.WriteLine("Too many players"); }
@@ -266,7 +238,7 @@ namespace CasinoGodsAPI.Models
         {
             if(TableType==typeof(RouletteLobby)|| TableType == typeof(WarLobby)|| TableType == typeof(DragonTigerLobby)) //games which dont require taking a seat
             { 
-                foreach(var bet in Bets) { if (bet >= ActiveTable.minBet && bet <= ActiveTable.maxBet) return false; } //at least one bet is valid 
+                foreach(var bet in Bets) { if (bet >= ActiveTable.MinBet && bet <= ActiveTable.MaxBet) return false; } //at least one bet is valid 
                 return true;
             }
             else //games which require taking a seat
@@ -305,7 +277,7 @@ namespace CasinoGodsAPI.Models
                 if (CardsColor[0] == CardsColor[1]) { report = "Suited Tie!"; WinningPlace = 3; }
                 else { report = "Tie!"; WinningPlace = 2; }
             }
-            await Task.Delay(TimeSpan.FromSeconds(ActiveTable.actionTime));
+            await Task.Delay(TimeSpan.FromSeconds(ActiveTable.ActionTime));
             await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("Cards", Cards, report);
             DragonTigerConvertBettingLists();
             //await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", report);
@@ -510,7 +482,7 @@ namespace CasinoGodsAPI.Models
             if (CardsPlayed >= RedCard) 
             {
                 await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Shuffling cards, please wait...");
-                ShuffleDecks(ActiveTable.decks);
+                ShuffleDecks(ActiveTable.Decks);
                 await Task.Delay(TimeSpan.FromSeconds(5));
             }
             GameIsBeingPlayedRightNow = false;
@@ -544,11 +516,11 @@ namespace CasinoGodsAPI.Models
                     int BankrollClaim_int = int.Parse(BankrollClaim.Value);
                     if (RoleClaim.Value != "Guest")
                     {                        
-                      var PlayerDB =await dbContext.Players.FirstOrDefaultAsync(u => u.username == player.Key);
+                      var PlayerDB =await dbContext.Players.FirstOrDefaultAsync(u => u.Username == player.Key);
                         if (PlayerDB != null)
                         {
-                            PlayerDB.profit += Profit[player.Key];
-                            PlayerDB.bankroll = BankrollClaim_int + player.Value;
+                            PlayerDB.Profit += Profit[player.Key];
+                            PlayerDB.Bankroll = BankrollClaim_int + player.Value;
                             await dbContext.SaveChangesAsync();
                         }
                         else Console.WriteLine("Cant find user in database");

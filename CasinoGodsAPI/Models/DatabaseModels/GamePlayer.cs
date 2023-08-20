@@ -3,14 +3,14 @@
     public class GamePlayerTable
     {
         public int Id { get; set; }
-        public Games gameName { get; set; }
-        public Player player { get; set; }
-        public int gamesPlayed { get; set; } = 0;
-        public int wins { get; set; } = 0;
-        public int loses { get; set; } = 0;
-        public int draws { get; set; } = 0;
-        public float winratio { get; set; } = 0;
-        public float profit { get; set; } = 0;
+        public Games GameName { get; set; }
+        public Player Player { get; set; }
+        public int GamesPlayed { get; set; } = 0;
+        public int Wins { get; set; } = 0;
+        public int Loses { get; set; } = 0;
+        public int Draws { get; set; } = 0;
+        public float Winratio { get; set; } = 0;
+        public float Profit { get; set; } = 0;
 
     }
 }

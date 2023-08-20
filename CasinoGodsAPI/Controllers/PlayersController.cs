@@ -12,6 +12,10 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.SignalR;
 using CasinoGodsAPI.Models.DatabaseModels;
+using CasinoGodsAPI.DTOs;
+using MailKit.Security;
+using MimeKit;
+using MailKit.Net.Smtp;
 
 namespace CasinoGodsAPI.Controllers
 {
@@ -36,23 +40,23 @@ namespace CasinoGodsAPI.Controllers
         
         [Route("register")]
         [HttpPost]
-        public async Task<IActionResult> RegisterPlayer([FromBody] PlayerSignUp playerRequest)
+        public async Task<IActionResult> RegisterPlayer([FromBody] SignUpDTO playerRequest)
         {
             //warunki do spelnienia, unikalny login,unikalny mail,
-            if ((await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.username == playerRequest.username) == null) &&
-                 await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.email == playerRequest.email) == null)
+            if ((await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.Username == playerRequest.username) == null) &&
+                 await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.Email == playerRequest.email) == null)
             {
 
-                string message = PlayerSignUp.CheckSignUpCredentials(playerRequest);
+                string message = SignUpDTO.CheckSignUpCredentials(playerRequest);
                 if (message != "") return BadRequest(message);
                 else
                 {
                     Player new_player = new Player();
                     new_player.Id = Guid.NewGuid();
-                    new_player.username = playerRequest.username;
-                    new_player.email = playerRequest.email;
-                    new_player.birthdate = playerRequest.birthdate;
-                    new_player.hashPass(playerRequest.password);
+                    new_player.Username = playerRequest.username;
+                    new_player.Email = playerRequest.email;
+                    new_player.Birthdate = playerRequest.birthdate;
+                    new_player.HashPass(playerRequest.password);
 
                     //dodawanie nowego gracza
                     await _casinoGodsDbContext.Players.AddAsync(new_player);
@@ -62,13 +66,13 @@ namespace CasinoGodsAPI.Controllers
                     foreach (var gameNameFromTable in gameslist)
                     {
                         GamePlayerTable gamePlusPlayer = new GamePlayerTable();
-                        gamePlusPlayer.gameName = gameNameFromTable;
-                        gamePlusPlayer.player = new_player;
+                        gamePlusPlayer.GameName = gameNameFromTable;
+                        gamePlusPlayer.Player = new_player;
 
                         await _casinoGodsDbContext.GamePlusPlayersTable.AddAsync(gamePlusPlayer);
                     }
 
-                    var playerGamelist = await _casinoGodsDbContext.GamePlusPlayersTable.Where(c => c.player == new_player).ToListAsync();
+                    var playerGamelist = await _casinoGodsDbContext.GamePlusPlayersTable.Where(c => c.Player == new_player).ToListAsync();
 
                     await _casinoGodsDbContext.SaveChangesAsync();
                     return Ok(new_player);
@@ -78,24 +82,24 @@ namespace CasinoGodsAPI.Controllers
             }//dalsze sprawdzanie
 
 
-            else if ((_casinoGodsDbContext.Players.SingleOrDefault(play => play.username == playerRequest.username) != null) &&
-                 _casinoGodsDbContext.Players.SingleOrDefault(play => play.email == playerRequest.email) == null)
+            else if ((_casinoGodsDbContext.Players.SingleOrDefault(play => play.Username == playerRequest.username) != null) &&
+                 _casinoGodsDbContext.Players.SingleOrDefault(play => play.Email == playerRequest.email) == null)
             { return BadRequest("Username already in use"); }
-            else if ((_casinoGodsDbContext.Players.SingleOrDefault(play => play.username == playerRequest.username) == null) &&
-                 _casinoGodsDbContext.Players.SingleOrDefault(play => play.email == playerRequest.email) != null)
+            else if ((_casinoGodsDbContext.Players.SingleOrDefault(play => play.Username == playerRequest.username) == null) &&
+                 _casinoGodsDbContext.Players.SingleOrDefault(play => play.Email == playerRequest.email) != null)
             { return BadRequest("Email already in use"); }
             else return BadRequest("Username and email already in use");//username or email already in use
         }
 
         [Route("login")]
         [HttpPost]
-        public async Task<IActionResult> LoginPlayer([FromBody] PlayerSignIn playerRequest)
+        public async Task<IActionResult> LoginPlayer([FromBody] SignInDTO playerRequest)
         {
-            Player loggedPlayer = await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.username == playerRequest.username);
+            Player loggedPlayer = await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.Username == playerRequest.username);
             if (loggedPlayer == null) return BadRequest("Username not found");
             else
             {
-                if (!CheckPassword(playerRequest.password, loggedPlayer.passHash, loggedPlayer.passSalt)) return BadRequest("Password not correct");
+                if (!CheckPassword(playerRequest.password, loggedPlayer.PassHash, loggedPlayer.PassSalt)) return BadRequest("Password not correct");
                 else
                 {
                     var activePlayerCheck =await redisDbLogin.StringGetAsync(playerRequest.username);
@@ -105,10 +109,10 @@ namespace CasinoGodsAPI.Controllers
                     redisDbJwt.StringSetAsync(jwt, playerRequest.username, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
                     ActivePlayerDTO ap = new ActivePlayerDTO
                     {
-                        username = loggedPlayer.username,
-                        bankroll = loggedPlayer.bankroll,
-                        profit = loggedPlayer.profit,
-                        jwt = jwt
+                        Username = loggedPlayer.Username,
+                        Bankroll = loggedPlayer.Bankroll,
+                        Profit = loggedPlayer.Profit,
+                        Jwt = jwt
                     };
                     return Ok(ap);
                 }
@@ -130,20 +134,20 @@ namespace CasinoGodsAPI.Controllers
         {
             Player guestPlayer = new Player
             {
-                bankroll = 1000,
-                profit = 0,
-                username = "guest" + new Random().Next(0, 100000),
+                Bankroll = 1000,
+                Profit = 0,
+                Username = "guest" + new Random().Next(0, 100000),
             };
             string jwt = guestPlayer.CreateToken("guest", _configuration);
-            redisDbLogin.StringSetAsync(guestPlayer.username, jwt, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
-            redisDbJwt.StringSetAsync(jwt, guestPlayer.username, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
-            redisGuestBankrolls.StringSetAsync(guestPlayer.username, "1000");
+            redisDbLogin.StringSetAsync(guestPlayer.Username, jwt, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
+            redisDbJwt.StringSetAsync(jwt, guestPlayer.Username, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
+            redisGuestBankrolls.StringSetAsync(guestPlayer.Username, "1000");
             ActivePlayerDTO ap = new ActivePlayerDTO
             {
-                username = guestPlayer.username,
-                bankroll = guestPlayer.bankroll,
-                profit = guestPlayer.profit,
-                jwt = jwt
+                Username = guestPlayer.Username,
+                Bankroll = guestPlayer.Bankroll,
+                Profit = guestPlayer.Profit,
+                Jwt = jwt
             };
             await _casinoGodsDbContext.SaveChangesAsync();
             return Ok(ap);
@@ -151,7 +155,7 @@ namespace CasinoGodsAPI.Controllers
 
         [Route("refreshToken")]
         [HttpPut]
-        public async Task<IActionResult> RefreshToken([FromBody] JwtClass jwt)
+        public async Task<IActionResult> RefreshToken([FromBody] JwtDTO jwt)
         {
             string response = await GlobalFunctions.RefreshTokenGlobal(jwt.jwtString, redisDbLogin, redisDbJwt, _configuration);
             if (response == "Session expired, log in again"|| response=="Redis data error, log in again") return BadRequest(response);
@@ -160,17 +164,17 @@ namespace CasinoGodsAPI.Controllers
         
         [Route("recovery")]
         [HttpPut]
-        public async Task<IActionResult> RecoveryPlayer([FromBody] EmailRecovery email)
+        public async Task<IActionResult> RecoveryPlayer([FromBody] EmailDTO email)
         {
 
-            var playerToRecover = await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.email == email.emailRec);
+            var playerToRecover = await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.Email == email.emailRec);
             if (playerToRecover != null)
             {
                 string newPass = Player.GetRandomPassword(10);
-                playerToRecover.password = newPass;
+                playerToRecover.Password = newPass;
 
                 await _casinoGodsDbContext.SaveChangesAsync();
-                Player.sendRecoveryEmail(playerToRecover.email, playerToRecover.password);
+                Player.SendRecoveryEmail(playerToRecover.Email, playerToRecover.Password);
                 return Ok();
             }
             else return BadRequest("Email not found");
@@ -178,7 +182,7 @@ namespace CasinoGodsAPI.Controllers
 
         [Route("Logout")]
         [HttpPut]
-        public async Task<IActionResult> DeleteActivePlayer([FromBody] JwtClass jwt)
+        public async Task<IActionResult> DeleteActivePlayer([FromBody] JwtDTO jwt)
         {
             var playerToDelete = await redisDbJwt.StringGetAsync(jwt.jwtString);
             if (!playerToDelete.IsNull) {
@@ -190,7 +194,7 @@ namespace CasinoGodsAPI.Controllers
 
         [Route("TablesData")]
         [HttpPost]
-        public async Task<IActionResult> GetTablesData([FromBody] JwtClass jwt)
+        public async Task<IActionResult> GetTablesData([FromBody] JwtDTO jwt)
         {
             Console.WriteLine(jwt.jwtString);
             Console.WriteLine(jwt.jwtString.Length);
@@ -208,6 +212,7 @@ namespace CasinoGodsAPI.Controllers
                 };
                 return Ok(obj);
             }
-        }                                
+        }
+      
     }
 }

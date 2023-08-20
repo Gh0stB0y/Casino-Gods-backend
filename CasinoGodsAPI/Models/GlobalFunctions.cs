@@ -1,4 +1,5 @@
-﻿using StackExchange.Redis;
+﻿using CasinoGodsAPI.Databases;
+using StackExchange.Redis;
 
 namespace CasinoGodsAPI.Models
 {
@@ -14,12 +15,12 @@ namespace CasinoGodsAPI.Models
 
                 await redisDbJwt.KeyDeleteAsync(jwt);
                 await redisDbLogin.KeyDeleteAsync(username);
-                var ActivePlayer = new ActivePlayers(username, jwt, _configuration);
-                await redisDbLogin.StringSetAsync(ActivePlayer.Name, ActivePlayer.jwt, new TimeSpan(0,0,5,0));
-                await redisDbJwt.StringSetAsync(ActivePlayer.jwt, ActivePlayer.Name, new TimeSpan(0,0,5,0));
+                var ActivePlayer = new RedisActivePlayer(username, jwt, _configuration);
+                await redisDbLogin.StringSetAsync(ActivePlayer.Name, ActivePlayer.Jwt, new TimeSpan(0,0,5,0));
+                await redisDbJwt.StringSetAsync(ActivePlayer.Jwt, ActivePlayer.Name, new TimeSpan(0,0,5,0));
                 //Console.WriteLine("login ktorego szukam: "+ActivePlayer.Name);
 
-                return ActivePlayer.jwt;
+                return ActivePlayer.Jwt;
             }
         }
         public static async Task<string> RefreshTokenGlobal(string jwt,string UName, IDatabase redisDbLogin, IDatabase redisDbJwt, IConfiguration _configuration)
@@ -33,11 +34,11 @@ namespace CasinoGodsAPI.Models
                 {
                     await redisDbJwt.KeyDeleteAsync(jwt);
                     await redisDbLogin.KeyDeleteAsync(username);
-                    var ActivePlayer = new ActivePlayers(username, jwt, _configuration);
-                    Console.WriteLine("JWT ZAPISANE DO REDISA" + ActivePlayer.jwt);
-                    await redisDbLogin.StringSetAsync(ActivePlayer.Name, ActivePlayer.jwt, new TimeSpan(0,0,5,0));
-                    await redisDbJwt.StringSetAsync(ActivePlayer.jwt, ActivePlayer.Name, new TimeSpan(0,0,5,0));
-                    return ActivePlayer.jwt;
+                    var ActivePlayer = new RedisActivePlayer(username, jwt, _configuration);
+                    Console.WriteLine("JWT ZAPISANE DO REDISA" + ActivePlayer.Jwt);
+                    await redisDbLogin.StringSetAsync(ActivePlayer.Name, ActivePlayer.Jwt, new TimeSpan(0,0,5,0));
+                    await redisDbJwt.StringSetAsync(ActivePlayer.Jwt, ActivePlayer.Name, new TimeSpan(0,0,5,0));
+                    return ActivePlayer.Jwt;
                 }
                 else return "Redis data error, log in again";
             }

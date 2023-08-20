@@ -61,7 +61,7 @@ namespace CasinoGodsAPI.TablesModel
             string UserRole = jwtSecurityToken.Claims.SingleOrDefault(c => c.Type == ClaimTypes.Role).Value;
             string bankroll;
             if (UserRole == "Guest") bankroll = await redisGuestBankrolls.StringGetAsync(paramUName);
-            else bankroll = _casinoGodsDbContext.Players.Where(c => c.username == paramUName).Select(p => p.bankroll).FirstOrDefaultAsync().Result.ToString();
+            else bankroll = _casinoGodsDbContext.Players.Where(c => c.Username == paramUName).Select(p => p.Bankroll).FirstOrDefaultAsync().Result.ToString();
             var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
             var Claims = new List<Claim>()
              { new Claim("ConnectionID", Context.ConnectionId),
@@ -89,9 +89,9 @@ namespace CasinoGodsAPI.TablesModel
             {
                 if (role != "Guest")
                 {
-                    var player = await _casinoGodsDbContext.Players.SingleOrDefaultAsync(p => p.username == username);
+                    var player = await _casinoGodsDbContext.Players.SingleOrDefaultAsync(p => p.Username == username);
                     if (player == null) Console.WriteLine("CRITICAL ERROR! USERNAME NOT FOUND IN DATABASE");
-                    else { player.bankroll = bankroll; player.profit += profit; await _casinoGodsDbContext.SaveChangesAsync(); }
+                    else { player.Bankroll = bankroll; player.Profit += profit; await _casinoGodsDbContext.SaveChangesAsync(); }
                 }
             }
             string tableId;
@@ -139,7 +139,7 @@ namespace CasinoGodsAPI.TablesModel
         public async Task<bool> CheckFullTable(string TableId)
         {
             int CurrentUsers = TableService.UserCountAtTablesDictionary[TableId];
-            int MaxUsers =  ActiveTables.SingleOrDefault(t => t.TableInstanceId.ToString() == TableId).maxseats;    
+            int MaxUsers =  ActiveTables.SingleOrDefault(t => t.TableInstanceId.ToString() == TableId).Maxseats;    
             if (MaxUsers != default)
             {
                 if (CurrentUsers < MaxUsers) return true; 
@@ -158,14 +158,14 @@ namespace CasinoGodsAPI.TablesModel
                     TableInstanceId = Guid.NewGuid(),
                     Name = table.CKname,
                     Game = table.CKGame,
-                    minBet = table.minBet,
-                    maxBet = table.maxBet,
-                    betTime = table.betTime,
-                    maxseats = table.maxseats,
-                    actionTime = table.actionTime,
-                    sidebet1 = table.sidebet1,
-                    sidebet2 = table.sidebet2,
-                    decks = table.decks
+                    MinBet = table.MinBet,
+                    MaxBet = table.MaxBet,
+                    BetTime = table.BetTime,
+                    Maxseats = table.Maxseats,
+                    ActionTime = table.ActionTime,
+                    Sidebet1 = table.Sidebet1,
+                    Sidebet2 = table.Sidebet2,
+                    Decks = table.Decks
                 };
                 list.Add(TableInstance);                               
             }    
@@ -207,7 +207,7 @@ namespace CasinoGodsAPI.TablesModel
 
                 var Table = ActiveTables.SingleOrDefault(i => i.TableInstanceId.ToString() == TableId);
                 var SameTypeInstances = ActiveTables.Where(t => t.Game == Table.Game && t.Name == Table.Name).ToList();
-                if (SameTypeInstances.Where(t => t.maxseats > TableService.UserCountAtTablesDictionary[t.TableInstanceId.ToString()]).ToList().Count<1) AddNewTableInstance(TableId);
+                if (SameTypeInstances.Where(t => t.Maxseats > TableService.UserCountAtTablesDictionary[t.TableInstanceId.ToString()]).ToList().Count<1) AddNewTableInstance(TableId);
                 return TableNotFull;
             }
             else
@@ -226,14 +226,14 @@ namespace CasinoGodsAPI.TablesModel
                     TableInstanceId = Guid.NewGuid(),
                     Name = ParentTable.Name,
                     Game = ParentTable.Game,
-                    minBet = ParentTable.minBet,
-                    maxBet = ParentTable.maxBet,
-                    betTime = ParentTable.betTime,
-                    maxseats = ParentTable.maxseats,
-                    actionTime = ParentTable.actionTime,
-                    sidebet1 = ParentTable.sidebet1,
-                    sidebet2 = ParentTable.sidebet2,
-                    decks = ParentTable.decks
+                    MinBet = ParentTable.MinBet,
+                    MaxBet = ParentTable.MaxBet,
+                    BetTime = ParentTable.BetTime,
+                    Maxseats = ParentTable.Maxseats,
+                    ActionTime = ParentTable.ActionTime,
+                    Sidebet1 = ParentTable.Sidebet1,
+                    Sidebet2 = ParentTable.Sidebet2,
+                    Decks = ParentTable.Decks
                 };
                 TableService.UserCountAtTablesDictionary.TryAdd(ChildTable.TableInstanceId.ToString(), 0);
                 ActiveTables.Add(ChildTable);
@@ -250,7 +250,7 @@ namespace CasinoGodsAPI.TablesModel
                 var SameTypeInstances = ActiveTables.Where(t => t.Game == Table.Game && t.Name == Table.Name).ToList();
                 int count = 0;
                 foreach (var Instance in SameTypeInstances) {
-                    if (TableService.UserCountAtTablesDictionary[Instance.TableInstanceId.ToString()] < Instance.maxseats) count++;
+                    if (TableService.UserCountAtTablesDictionary[Instance.TableInstanceId.ToString()] < Instance.Maxseats) count++;
                 }
                 if(count>1)AllTablesFull = false;
                 if (SameTypeInstances.Count > 1 && AllTablesFull == false)

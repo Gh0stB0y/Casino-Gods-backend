@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.CookiePolicy;
 //using CasinoGodsAPI.Migrations;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Xml.Linq;
+using CasinoGodsAPI.Models.DatabaseModels;
 
 namespace CasinoGodsAPI.Controllers
 {
@@ -32,7 +33,7 @@ namespace CasinoGodsAPI.Controllers
             if (await _casinoGodsDbContext.GamesList.SingleOrDefaultAsync(g => g.Name == gameName) != null) return BadRequest("Game already exists in database");
             else
             {
-                GamesDatabase newGame = new GamesDatabase
+                Games newGame = new Games
                 {
                     Name = gameName,
                 };
@@ -41,7 +42,7 @@ namespace CasinoGodsAPI.Controllers
                 var allPlayer = await _casinoGodsDbContext.Players.ToListAsync();
                 foreach (var player_from_list in allPlayer)
                 {
-                    GamePlusPlayer gamePlusPlayer = new GamePlusPlayer
+                    GamePlayerTable gamePlusPlayer = new GamePlayerTable
                     {
                         gameName = newGame,
                         player = player_from_list
@@ -56,7 +57,7 @@ namespace CasinoGodsAPI.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteGame([FromBody] string gameName)
         {
-            GamesDatabase newGame =await _casinoGodsDbContext.GamesList.SingleOrDefaultAsync(g=>g.Name== gameName);
+            Games newGame =await _casinoGodsDbContext.GamesList.SingleOrDefaultAsync(g=>g.Name== gameName);
 
             if (newGame != null)
             {
@@ -92,7 +93,7 @@ namespace CasinoGodsAPI.Controllers
                             if (await _casinoGodsDbContext.TablesList.Where(g => g.CKGame == gameObj.Name).SingleOrDefaultAsync(t => t.CKname == BJobj.name) == null)
                             {
 
-                                TablesDatabase newTable = new TablesDatabase()
+                                Tables newTable = new Tables()
                                 {
                                     CKname = BJobj.name,
                                     CKGame = gameObj.Name,

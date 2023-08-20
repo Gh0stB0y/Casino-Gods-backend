@@ -1,6 +1,7 @@
 ﻿using CasinoGodsAPI.Controllers;
 using CasinoGodsAPI.Data;
 using CasinoGodsAPI.Migrations;
+using CasinoGodsAPI.Models.DatabaseModels;
 using CasinoGodsAPI.Services;
 using CasinoGodsAPI.TablesModel;
 using Microsoft.AspNetCore.Mvc;
@@ -72,7 +73,7 @@ namespace CasinoGodsAPI.Models
         public ConcurrentDictionary<string,List<int>>UserInitialBetsDictionary=new ConcurrentDictionary<string, List<int>>(); //represent list sent by users, those list are one before converting
         public ConcurrentDictionary<string, List<int>> UserFinalBets = new ConcurrentDictionary<string, List<int>>();//represents final betting list, used in roulette games index from 0 to 36
         public ConcurrentDictionary<string, int> UserWinnings = new ConcurrentDictionary<string, int>(); //represents how much user won during a single game
-        private ActiveTablesDatabase ActiveTable= new ActiveTablesDatabase();
+        private ActiveTablesDB ActiveTable= new ();
 
         //private List<int> ShuffledDeck = new List<int>();
         private Stack<int> ShuffledDeck = new Stack<int>();

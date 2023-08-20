@@ -11,6 +11,7 @@ using StackExchange.Redis;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.SignalR;
+using CasinoGodsAPI.Models.DatabaseModels;
 
 namespace CasinoGodsAPI.Controllers
 {
@@ -60,7 +61,7 @@ namespace CasinoGodsAPI.Controllers
                     var gameslist = await _casinoGodsDbContext.GamesList.ToListAsync();
                     foreach (var gameNameFromTable in gameslist)
                     {
-                        GamePlusPlayer gamePlusPlayer = new GamePlusPlayer();
+                        GamePlayerTable gamePlusPlayer = new GamePlayerTable();
                         gamePlusPlayer.gameName = gameNameFromTable;
                         gamePlusPlayer.player = new_player;
 

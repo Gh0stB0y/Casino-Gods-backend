@@ -1,5 +1,7 @@
 ﻿using CasinoGodsAPI.Data;
+
 using CasinoGodsAPI.Models;
+using CasinoGodsAPI.Models.DatabaseModels;
 using CasinoGodsAPI.TablesModel;
 using Microsoft.AspNet.SignalR;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -68,7 +70,7 @@ namespace CasinoGodsAPI.Services
                         {
                             string typ = hubContext.Key.Name.Replace("Lobby", "");
                             if (typ == "DragonTiger") typ = "Dragon Tiger";
-                            List<ActiveTablesDatabase> list = new List<ActiveTablesDatabase>();
+                            List<ActiveTablesDB> list =new();
                             List<LobbyTableDataDTO> listToSend = new List<LobbyTableDataDTO>();
                             list = LobbyHub.ActiveTables.Where(g => g.Game == typ).ToList();
                             foreach (var table in list)

@@ -23,6 +23,7 @@ using System.Threading;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System.Collections.Concurrent;
 using System.Drawing;
+using CasinoGodsAPI.Models.DatabaseModels;
 
 namespace CasinoGodsAPI.TablesModel
 {
@@ -33,7 +34,7 @@ namespace CasinoGodsAPI.TablesModel
         private readonly IConnectionMultiplexer _redis;
         private readonly IDatabase redisDbLogin, redisDbJwt, redisGuestBankrolls;
 
-        public static List<ActiveTablesDatabase>ActiveTables;
+        public static List<ActiveTablesDB>ActiveTables;
         
         public LobbyHub(CasinoGodsDbContext CasinoGodsDbContext, IConfiguration configuration, IConnectionMultiplexer redis)
         {
@@ -149,10 +150,10 @@ namespace CasinoGodsAPI.TablesModel
         public async Task AddBasicTables()
         {
             var NewTables = await _casinoGodsDbContext.TablesList.ToListAsync();
-            var list=new List<ActiveTablesDatabase>();
+            var list=new List<ActiveTablesDB>();
             foreach (var table in NewTables) 
             {
-                var TableInstance = new ActiveTablesDatabase() { 
+                var TableInstance = new ActiveTablesDB() { 
                 
                     TableInstanceId = Guid.NewGuid(),
                     Name = table.CKname,
@@ -220,7 +221,7 @@ namespace CasinoGodsAPI.TablesModel
             var ParentTable = ActiveTables.SingleOrDefault(t => t.TableInstanceId.ToString() == TableId);
             if (ParentTable != null)
             {
-                var ChildTable = new ActiveTablesDatabase()
+                var ChildTable = new ActiveTablesDB()
                 {
                     TableInstanceId = Guid.NewGuid(),
                     Name = ParentTable.Name,

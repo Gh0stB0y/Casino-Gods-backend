@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+﻿using CasinoGodsAPI.Models.DatabaseModels;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.ComponentModel.DataAnnotations;
 
 namespace CasinoGodsAPI.Models
@@ -9,7 +10,7 @@ namespace CasinoGodsAPI.Models
         [Key]
         public Guid TableInstanceId { get; set; } = new Guid();
         public string TablePath { get; set; }=string.Empty;
-        public TablesDatabase TableType { get; set; }
+        public Tables TableType { get; set; }
 
     }
     public class LobbyTableDataDTO
@@ -26,7 +27,7 @@ namespace CasinoGodsAPI.Models
         public bool sidebet2 { get; set; } = true;
         public int currentSeats { get; set; } = 0;
         public int maxSeats { get; set; } = 0;
-        public LobbyTableDataDTO(ActiveTablesDatabase table)
+        public LobbyTableDataDTO(ActiveTablesDB table)
         {
             Id = table.TableInstanceId.ToString();
             Name = table.Name;

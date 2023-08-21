@@ -41,7 +41,7 @@ namespace CasinoGodsAPI.Handlers.Controllers
                     string jwt = loggedPlayer.CreateToken(request.Player.username, _configuration);
                     _redisDbLogin.StringSetAsync(request.Player.username, jwt, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
                     _redisDbJwt.StringSetAsync(jwt, request.Player.username, new TimeSpan(0, 0, 5, 0), flags: CommandFlags.FireAndForget);
-                    ActivePlayerDTO ap = new ActivePlayerDTO
+                    ActivePlayerDTO ap = new()
                     {
                         Username = loggedPlayer.Username,
                         Bankroll = loggedPlayer.Bankroll,

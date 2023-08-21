@@ -7,6 +7,6 @@ using Microsoft.EntityFrameworkCore;
 namespace CasinoGodsAPI.Commands.Databases
 {
     //public record AddDbRecordCommand<T>(DbContext DbContext,DbSet<T> TableInDb, T ObjToAdd) : IRequest<T> where T : class;
-    public record AddDbRecordCommand(DbContext DbContext, DbSet<Tables> TableInDb, Tables ObjToAdd) : IRequest<Tables>;
+    public record AddTableDbRecordCommand(DbContext DbContext, DbSet<Tables> TableInDb, Tables ObjToAdd) : IRequest<Tables>;
 }
 

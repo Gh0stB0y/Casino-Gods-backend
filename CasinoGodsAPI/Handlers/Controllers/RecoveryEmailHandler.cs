@@ -17,13 +17,13 @@ namespace CasinoGodsAPI.Handlers.Controllers
         }
         public async Task<IActionResult> Handle(RecoveryEmailCommand request, CancellationToken cancellationToken)
         {           
-            var playerToRecover = await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.Email == request.Email.emailRec);
+            var playerToRecover = await _casinoGodsDbContext.Players.SingleOrDefaultAsync(play => play.Email == request.Email.emailRec, cancellationToken: cancellationToken);
             if (playerToRecover != null)
             {
                 string newPass = Player.GetRandomPassword(10);
                 playerToRecover.Password = newPass;
 
-                await _casinoGodsDbContext.SaveChangesAsync();
+                await _casinoGodsDbContext.SaveChangesAsync(cancellationToken);
                 Player.SendRecoveryEmail(playerToRecover.Email, playerToRecover.Password);
                 return new OkResult();
             }

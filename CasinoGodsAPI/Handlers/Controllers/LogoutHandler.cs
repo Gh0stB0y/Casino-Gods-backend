@@ -9,11 +9,9 @@ namespace CasinoGodsAPI.Handlers.Controllers
     {
         private readonly IDatabase _redisDbLogin;
         private readonly IDatabase _redisDbJwt;
-        private readonly IConfiguration _configuration;
 
-        public LogoutHandler(IConnectionMultiplexer redis,IConfiguration configuration)
+        public LogoutHandler(IConnectionMultiplexer redis)
         {
-            _configuration = configuration;
             _redisDbLogin = redis.GetDatabase(0);
             _redisDbJwt = redis.GetDatabase(1);
         }

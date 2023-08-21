@@ -41,7 +41,7 @@ namespace CasinoGodsAPI.Handlers.Controllers
                 Profit = guestPlayer.Profit,
                 Jwt = jwt
             };
-            await _casinoGodsDbContext.SaveChangesAsync();
+            await _casinoGodsDbContext.SaveChangesAsync(cancellationToken);
             return new OkObjectResult(ap);
         }
     }

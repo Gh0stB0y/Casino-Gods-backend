@@ -5,15 +5,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CasinoGodsAPI.Handlers.Databases
 {
-    public class DeleteDbRecordHandler : IRequestHandler<DeleteDbRecordCommand, Tables> 
+    public class DeleteTableDbRecordHandler : IRequestHandler<DeleteTableDbRecordCommand, Tables> 
     {
         private readonly ILogger _logger;
 
-        public DeleteDbRecordHandler(ILogger<DeleteDbRecordHandler> logger)
+        public DeleteTableDbRecordHandler(ILogger<DeleteTableDbRecordHandler> logger)
         {
             _logger = logger;
         }
-        public async Task<Tables> Handle(DeleteDbRecordCommand request, CancellationToken cancellationToken)
+        public async Task<Tables> Handle(DeleteTableDbRecordCommand request, CancellationToken cancellationToken)
         {
             var dbContext = request.DbContext;
             var tableInDb = request.TableInDb;

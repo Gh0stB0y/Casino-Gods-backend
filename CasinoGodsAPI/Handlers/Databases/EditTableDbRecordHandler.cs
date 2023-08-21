@@ -5,15 +5,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CasinoGodsAPI.Handlers.Databases
 {
-    public class EditDbRecordHandler : IRequestHandler<EditDbRecordCommand, Tables>
+    public class EditTableDbRecordHandler : IRequestHandler<EditTableDbRecordCommand, Tables>
     {
         private readonly ILogger _logger;
 
-        public EditDbRecordHandler(ILogger<EditDbRecordHandler> logger)
+        public EditTableDbRecordHandler(ILogger<EditTableDbRecordHandler> logger)
         {
             _logger = logger;
         }
-        public async Task<Tables> Handle(EditDbRecordCommand request, CancellationToken cancellationToken)
+        public async Task<Tables> Handle(EditTableDbRecordCommand request, CancellationToken cancellationToken)
         {
             var dbContext = request.DbContext;
             var tableInDb = request.TableInDb;

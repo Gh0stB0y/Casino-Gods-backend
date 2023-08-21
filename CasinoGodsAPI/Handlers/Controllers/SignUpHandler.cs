@@ -28,30 +28,34 @@ namespace CasinoGodsAPI.Handlers.Controllers
                 if (message != "") return new BadRequestObjectResult(message);
                 else
                 {
-                    Player new_player = new Player();
-                    new_player.Id = Guid.NewGuid();
-                    new_player.Username = request.NewPlayer.username;
-                    new_player.Email = request.NewPlayer.email;
-                    new_player.Birthdate = request.NewPlayer.birthdate;
+                    Player new_player = new()
+                    {
+                        Id = Guid.NewGuid(),
+                        Username = request.NewPlayer.username,
+                        Email = request.NewPlayer.email,
+                        Birthdate = request.NewPlayer.birthdate
+                    };
                     new_player.HashPass(request.NewPlayer.password);
 
                     //dodawanie nowego gracza
-                    await _casinoGodsDbContext.Players.AddAsync(new_player);
+                    await _casinoGodsDbContext.Players.AddAsync(new_player, cancellationToken);
                     //
 
                     var gameslist = await _casinoGodsDbContext.GamesList.ToListAsync();
                     foreach (var gameNameFromTable in gameslist)
                     {
-                        GamePlayerTable gamePlusPlayer = new GamePlayerTable();
-                        gamePlusPlayer.GameName = gameNameFromTable;
-                        gamePlusPlayer.Player = new_player;
+                        GamePlayerTable gamePlusPlayer = new()
+                        {
+                            GameName = gameNameFromTable,
+                            Player = new_player
+                        };
 
-                        await _casinoGodsDbContext.GamePlusPlayersTable.AddAsync(gamePlusPlayer);
+                        await _casinoGodsDbContext.GamePlusPlayersTable.AddAsync(gamePlusPlayer, cancellationToken);
                     }
 
-                    var playerGamelist = await _casinoGodsDbContext.GamePlusPlayersTable.Where(c => c.Player == new_player).ToListAsync();
+                    var playerGamelist = await _casinoGodsDbContext.GamePlusPlayersTable.Where(c => c.Player == new_player).ToListAsync(cancellationToken: cancellationToken);
 
-                    await _casinoGodsDbContext.SaveChangesAsync();
+                    await _casinoGodsDbContext.SaveChangesAsync(cancellationToken);
                     return new OkObjectResult(new_player);
 
                 }

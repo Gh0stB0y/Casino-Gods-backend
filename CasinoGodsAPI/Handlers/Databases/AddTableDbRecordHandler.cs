@@ -8,15 +8,15 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace CasinoGodsAPI.Handlers.Databases
 {
-    public class AddDbRecordHandler : IRequestHandler<AddDbRecordCommand,Tables> 
+    public class AddTableDbRecordHandler : IRequestHandler<AddTableDbRecordCommand,Tables> 
     { 
         private readonly ILogger _logger;
-        public AddDbRecordHandler(ILogger<AddDbRecordHandler> logger)
+        public AddTableDbRecordHandler(ILogger<AddTableDbRecordHandler> logger)
         {
             _logger=logger;
         }
 
-        public async Task<Tables> Handle(AddDbRecordCommand request, CancellationToken cancellationToken)
+        public async Task<Tables> Handle(AddTableDbRecordCommand request, CancellationToken cancellationToken)
         {
             var dbContext = request.DbContext;
             var tableInDb= request.TableInDb;

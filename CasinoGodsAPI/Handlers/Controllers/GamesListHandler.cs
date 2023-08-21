@@ -32,7 +32,7 @@ namespace CasinoGodsAPI.Handlers.Controllers
             {
                 GamesListDTO obj = new GamesListDTO()
                 {
-                    gameNames = await _casinoGodsDbContext.GamesList.Select(str => str.Name).ToListAsync(),
+                    gameNames = await _casinoGodsDbContext.GamesList.Select(str => str.Name).ToListAsync(cancellationToken: cancellationToken),
                     jwt = response
                 };                
                 return new OkObjectResult(obj);

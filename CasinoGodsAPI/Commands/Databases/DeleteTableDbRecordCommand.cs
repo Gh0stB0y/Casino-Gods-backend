@@ -5,5 +5,5 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CasinoGodsAPI.Commands.Databases
 {
-    public record EditDbRecordCommand(DbContext DbContext,DbSet<Tables> TableInDb, Tables OldObj,Tables NewObj) : IRequest<Tables>;
+    public record DeleteTableDbRecordCommand(DbContext DbContext,DbSet<Tables> TableInDb, Tables ObjToDelete) : IRequest<Tables>;
 }

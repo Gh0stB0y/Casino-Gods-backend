@@ -16,7 +16,7 @@ namespace CasinoGodsAPI.Handlers.Controllers
         }
         public async Task<IActionResult> Handle(GetAllPlayersQuery request, CancellationToken cancellationToken)
         {
-            var player = await _casinoGodsDbContext.Players.ToListAsync();
+            var player = await _casinoGodsDbContext.Players.ToListAsync(cancellationToken: cancellationToken);
             return new OkObjectResult(player);
         }
     }

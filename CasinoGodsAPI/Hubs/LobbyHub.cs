@@ -1,28 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using System.Runtime.ExceptionServices;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using System.Threading.Tasks;
 using CasinoGodsAPI.Models;
 using CasinoGodsAPI.Data;
 using StackExchange.Redis;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
-using Microsoft.AspNet.SignalR.Messaging;
-//using Microsoft.AspNet.SignalR.Hubs;
-using System.Runtime.CompilerServices;
-using System.Collections.Generic;
-using CasinoGodsAPI.TablesModel;
 using CasinoGodsAPI.Services;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-
-using System;
-using System.Reflection;
-using System.Threading;
-using Microsoft.EntityFrameworkCore.Metadata;
-using System.Collections.Concurrent;
-using System.Drawing;
 using CasinoGodsAPI.Models.DatabaseModels;
 using CasinoGodsAPI.DTOs;
 
@@ -33,9 +17,9 @@ namespace CasinoGodsAPI.TablesModel
         protected readonly CasinoGodsDbContext _casinoGodsDbContext;
         private readonly IConfiguration _configuration;
         private readonly IConnectionMultiplexer _redis;
-        private readonly IDatabase redisDbLogin, redisDbJwt;//, redisGuestBankrolls;
+        private readonly IDatabase redisDbLogin, redisDbJwt;
 
-        public static List<ActiveTablesDB>ActiveTables;
+        public static List<ActiveTablesDB> ActiveTables;
         
         public LobbyHub(CasinoGodsDbContext CasinoGodsDbContext, IConfiguration configuration, IConnectionMultiplexer redis)
         {
@@ -44,9 +28,7 @@ namespace CasinoGodsAPI.TablesModel
             _redis = redis;
             redisDbLogin = _redis.GetDatabase(0);
             redisDbJwt = _redis.GetDatabase(1);
-            //redisGuestBankrolls = _redis.GetDatabase(2);
-        }
-        
+        }        
         public override async Task OnConnectedAsync()
         {
             await base.OnConnectedAsync();
@@ -110,13 +92,17 @@ namespace CasinoGodsAPI.TablesModel
             await Clients.Others.SendAsync("ChatReports", report);
             await base.OnDisconnectedAsync(exception);
         }
-        public async Task ChatMessages(string username, string message) {await Clients.Others.SendAsync("ChatMessages", username, message);}
+        public async Task ChatMessages(string username, string message) 
+        {
+            await Clients.Others.SendAsync("ChatMessages", username, message);
+        }
         public async Task TableChatMessages(string username,string message)
         {  
             string tableId = TableService.UserGroupDictionary[username];
             await Clients.Group(tableId).SendAsync("TableChatMessages", username, message);
         }
-        public async Task GetTableData() {
+        public async Task GetTableData() 
+        {
             var AllActiveTables=await _casinoGodsDbContext.ActiveTables.ToListAsync();
             if (AllActiveTables.Count == 0) {
                 TableService.UserCountAtTablesDictionary.Clear();await AddBasicTables(); 

@@ -37,7 +37,6 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(opt =>
     return connectionMultiplexer;
 });
 
-
 builder.Services.AddSignalR();
 builder.Services.AddControllers();
 builder.Services.AddHostedService<LobbyService>();
@@ -78,7 +77,7 @@ builder.Services.AddDbContext<CasinoGodsDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("FullStackConnectionString"));
 },ServiceLifetime.Scoped);
 
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetEntryAssembly()));
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
 builder.Services.AddCors(options =>
 {

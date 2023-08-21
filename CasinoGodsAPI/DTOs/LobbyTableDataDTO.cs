@@ -31,7 +31,7 @@ namespace CasinoGodsAPI.DTOs
             if (table.Sidebet1 == true || table.Sidebet2 == true) sidebets = true;
             else sidebets = false;
         }
-        public LobbyTableDataDTO(LobbyTableData baseObj)
+        /*public LobbyTableDataDTO(LobbyTableData baseObj)
         {
             if (baseObj == null) throw new ArgumentNullException();
 
@@ -47,6 +47,6 @@ namespace CasinoGodsAPI.DTOs
             sidebet2 = baseObj.TableType.Sidebet2;
             if (baseObj.TableType.Sidebet1 == true || baseObj.TableType.Sidebet2 == true) sidebets = true;
             else sidebets = false;
-        }
+        }*/
     }
 }

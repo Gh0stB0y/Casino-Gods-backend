@@ -13,7 +13,7 @@ namespace CasinoGodsAPI.Services
         private readonly Dictionary<Type, Microsoft.AspNetCore.SignalR.IHubContext<Microsoft.AspNetCore.SignalR.Hub>> _hubContexts;
         private readonly ILogger<LobbyService> _logger;
         private CancellationTokenSource _cancellationTokenSource;
-        public static List<LobbyTableData>ActiveTablesList { get; set; }
+        //public static List<LobbyTableData>ActiveTablesList { get; set; }
 
         public LobbyService(IServiceProvider serviceProvider, ILogger<LobbyService> logger, IConfiguration configuration, IConnectionMultiplexer redis) {
 

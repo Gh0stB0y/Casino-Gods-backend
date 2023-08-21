@@ -21,10 +21,10 @@ namespace CasinoGodsAPI.Models.DatabaseModels
         public bool Sidebet2 { get; set; } = true;
         public int Decks { get; set; } = 6;
 
-        public ICollection<LobbyTableData> ActiveTables { get; set; }
+        /*public ICollection<LobbyTableData> ActiveTables { get; set; }
         public Tables()
         {
             ActiveTables = new HashSet<LobbyTableData>();
-        }
+        }*/
     }
 }

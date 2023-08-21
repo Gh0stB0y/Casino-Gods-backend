@@ -4,6 +4,7 @@ using CasinoGodsAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CasinoGodsAPI.Migrations
 {
     [DbContext(typeof(CasinoGodsDbContext))]
-    partial class CasinoGodsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230821210145_updatedTablesNames")]
+    partial class updatedTablesNames
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -101,7 +104,7 @@ namespace CasinoGodsAPI.Migrations
 
                     b.HasIndex("PlayerId");
 
-                    b.ToTable("GamePlayers");
+                    b.ToTable("GamePlayersTable");
                 });
 
             modelBuilder.Entity("CasinoGodsAPI.Models.DatabaseModels.Games", b =>

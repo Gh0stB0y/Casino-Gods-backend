@@ -41,7 +41,7 @@ namespace CasinoGodsAPI.Handlers.Controllers
                     await _casinoGodsDbContext.Players.AddAsync(new_player, cancellationToken);
                     //
 
-                    var gameslist = await _casinoGodsDbContext.GamesList.ToListAsync();
+                    var gameslist = await _casinoGodsDbContext.Games.ToListAsync();
                     foreach (var gameNameFromTable in gameslist)
                     {
                         GamePlayerTable gamePlusPlayer = new()
@@ -50,10 +50,10 @@ namespace CasinoGodsAPI.Handlers.Controllers
                             Player = new_player
                         };
 
-                        await _casinoGodsDbContext.GamePlusPlayersTable.AddAsync(gamePlusPlayer, cancellationToken);
+                        await _casinoGodsDbContext.GamePlayers.AddAsync(gamePlusPlayer, cancellationToken);
                     }
 
-                    var playerGamelist = await _casinoGodsDbContext.GamePlusPlayersTable.Where(c => c.Player == new_player).ToListAsync(cancellationToken: cancellationToken);
+                    var playerGamelist = await _casinoGodsDbContext.GamePlayers.Where(c => c.Player == new_player).ToListAsync(cancellationToken: cancellationToken);
 
                     await _casinoGodsDbContext.SaveChangesAsync(cancellationToken);
                     return new OkObjectResult(new_player);

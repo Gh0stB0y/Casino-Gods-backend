@@ -136,7 +136,7 @@ namespace CasinoGodsAPI.TablesModel
         }
         public async Task AddBasicTables()
         {
-            var NewTables = await _casinoGodsDbContext.TablesList.ToListAsync();
+            var NewTables = await _casinoGodsDbContext.Tables.ToListAsync();
             var list=new List<ActiveTablesDB>();
             foreach (var table in NewTables) 
             {

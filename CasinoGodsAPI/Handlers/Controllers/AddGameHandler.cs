@@ -17,14 +17,14 @@ namespace CasinoGodsAPI.Handlers.Controllers
         }
         public async Task<IActionResult> Handle(AddGameCommand request, CancellationToken cancellationToken)
         {
-            if (await _casinoGodsDbContext.GamesList.SingleOrDefaultAsync(g => g.Name == request.GameName, cancellationToken: cancellationToken) != null) return new BadRequestObjectResult("Game already exists in database");
+            if (await _casinoGodsDbContext.Games.SingleOrDefaultAsync(g => g.Name == request.GameName, cancellationToken: cancellationToken) != null) return new BadRequestObjectResult("Game already exists in database");
             else
             {
                 Games newGame = new Games
                 {
                     Name = request.GameName,
                 };
-                await _casinoGodsDbContext.GamesList.AddAsync(newGame, cancellationToken);
+                await _casinoGodsDbContext.Games.AddAsync(newGame, cancellationToken);
 
                 var allPlayer = await _casinoGodsDbContext.Players.ToListAsync(cancellationToken: cancellationToken);
                 foreach (var player_from_list in allPlayer)
@@ -34,7 +34,7 @@ namespace CasinoGodsAPI.Handlers.Controllers
                         GameName = newGame,
                         Player = player_from_list
                     };
-                    await _casinoGodsDbContext.GamePlusPlayersTable.AddAsync(gamePlusPlayer, cancellationToken);
+                    await _casinoGodsDbContext.GamePlayers.AddAsync(gamePlusPlayer, cancellationToken);
                 }
                 await _casinoGodsDbContext.SaveChangesAsync(cancellationToken);
                 return new OkResult();

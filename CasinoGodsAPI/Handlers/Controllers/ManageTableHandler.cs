@@ -20,7 +20,7 @@ namespace CasinoGodsAPI.Handlers.Controllers
         }
         public async Task<IActionResult> Handle(ManageTableCommand request, CancellationToken cancellationToken)
         {
-            var gameObj = await _casinoGodsDbContext.GamesList.SingleOrDefaultAsync(g => g.Name == request.Obj.GameType, cancellationToken: cancellationToken);
+            var gameObj = await _casinoGodsDbContext.Games.SingleOrDefaultAsync(g => g.Name == request.Obj.GameType, cancellationToken: cancellationToken);
             if (gameObj != null)
             {
                 if (request.Obj.CheckTable())
@@ -43,16 +43,16 @@ namespace CasinoGodsAPI.Handlers.Controllers
                     {
                         case "add":
 
-                            var addedObj = await _mediator.Send(new AddTableDbRecordCommand(_casinoGodsDbContext, _casinoGodsDbContext.TablesList, TableObj), cancellationToken);
+                            var addedObj = await _mediator.Send(new AddTableDbRecordCommand(_casinoGodsDbContext, _casinoGodsDbContext.Tables, TableObj), cancellationToken);
                             if (addedObj != null) return new OkResult();
                             else return new BadRequestObjectResult("Table with given name already exists");
 
                         case "edit":
 
-                            var oldObj=await _casinoGodsDbContext.TablesList.Where(g=>g.CKGame== TableObj.CKGame&&g.CKname==TableObj.CKname).SingleOrDefaultAsync(cancellationToken: cancellationToken);
+                            var oldObj=await _casinoGodsDbContext.Tables.Where(g=>g.CKGame== TableObj.CKGame&&g.CKname==TableObj.CKname).SingleOrDefaultAsync(cancellationToken: cancellationToken);
                             if (oldObj != null)
                             {
-                                var updatedObj = await _mediator.Send(new EditTableDbRecordCommand(_casinoGodsDbContext, _casinoGodsDbContext.TablesList, oldObj, TableObj), cancellationToken);
+                                var updatedObj = await _mediator.Send(new EditTableDbRecordCommand(_casinoGodsDbContext, _casinoGodsDbContext.Tables, oldObj, TableObj), cancellationToken);
                                 if (updatedObj != null) return new OkObjectResult(updatedObj);
                                 else return new NotFoundObjectResult("Table not found");
                             }
@@ -63,7 +63,7 @@ namespace CasinoGodsAPI.Handlers.Controllers
 
                         case "delete":
 
-                            var deletedObj = await _mediator.Send(new DeleteTableDbRecordCommand(_casinoGodsDbContext, _casinoGodsDbContext.TablesList, TableObj), cancellationToken);
+                            var deletedObj = await _mediator.Send(new DeleteTableDbRecordCommand(_casinoGodsDbContext, _casinoGodsDbContext.Tables, TableObj), cancellationToken);
                             if(deletedObj!=null) return new OkObjectResult(deletedObj);
                             else return new NotFoundObjectResult("Table not found");
 

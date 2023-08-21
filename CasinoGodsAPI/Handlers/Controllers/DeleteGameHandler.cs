@@ -17,12 +17,12 @@ namespace CasinoGodsAPI.Handlers.Controllers
         }
         public async Task<IActionResult> Handle(DeleteGameCommand request, CancellationToken cancellationToken)
         {
-            Games newGame = await _casinoGodsDbContext.GamesList.SingleOrDefaultAsync(g => g.Name == request.GameName, cancellationToken: cancellationToken);
+            Games newGame = await _casinoGodsDbContext.Games.SingleOrDefaultAsync(g => g.Name == request.GameName, cancellationToken: cancellationToken);
 
             if (newGame != null)
             {
-                _casinoGodsDbContext.GamesList.Remove(newGame);
-                await _casinoGodsDbContext.GamePlusPlayersTable.Where(p => p.GameName == newGame).ExecuteDeleteAsync(cancellationToken: cancellationToken);                
+                _casinoGodsDbContext.Games.Remove(newGame);
+                await _casinoGodsDbContext.GamePlayers.Where(p => p.GameName == newGame).ExecuteDeleteAsync(cancellationToken: cancellationToken);                
                 await _casinoGodsDbContext.SaveChangesAsync(cancellationToken);
                 return new OkResult();
             }

@@ -1,4 +1,5 @@
 ﻿using CasinoGodsAPI.Data;
+using CasinoGodsAPI.DTOs;
 using CasinoGodsAPI.Models;
 using CasinoGodsAPI.Queries.Controllers.PlayerController;
 using MediatR;
@@ -29,7 +30,7 @@ namespace CasinoGodsAPI.Handlers.Controllers
             if (response == "Session expired, log in again") return new BadRequestObjectResult(response);
             else
             {
-                TableInitialDataDTO obj = new TableInitialDataDTO()
+                GamesListDTO obj = new GamesListDTO()
                 {
                     gameNames = await _casinoGodsDbContext.GamesList.Select(str => str.Name).ToListAsync(),
                     jwt = response

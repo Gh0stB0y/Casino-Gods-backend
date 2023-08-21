@@ -24,6 +24,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using System.Collections.Concurrent;
 using System.Drawing;
 using CasinoGodsAPI.Models.DatabaseModels;
+using CasinoGodsAPI.DTOs;
 
 namespace CasinoGodsAPI.TablesModel
 {

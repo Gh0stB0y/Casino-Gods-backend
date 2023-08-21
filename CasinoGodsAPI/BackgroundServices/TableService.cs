@@ -1,14 +1,9 @@
-﻿using CasinoGodsAPI.Data;
-using CasinoGodsAPI.Models;
+﻿using CasinoGodsAPI.Models;
 using CasinoGodsAPI.TablesModel;
-using Microsoft.AspNet.SignalR;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using StackExchange.Redis;
 using System.Collections.Concurrent;
 using System.Reflection;
-using System.Security.Claims;
-using System.Threading;
 
 namespace CasinoGodsAPI.Services
 {

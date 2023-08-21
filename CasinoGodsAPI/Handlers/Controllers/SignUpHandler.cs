@@ -1,13 +1,12 @@
 ﻿using CasinoGodsAPI.Commands.Controllers.PlayerController;
 using CasinoGodsAPI.Data;
-using CasinoGodsAPI.DTOs;
 using CasinoGodsAPI.Models.DatabaseModels;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CasinoGodsAPI.Controllers;
 using Microsoft.AspNet.SignalR.Messaging;
-
+using CasinoGodsAPI.DTOs;
 
 namespace CasinoGodsAPI.Handlers.Controllers
 {

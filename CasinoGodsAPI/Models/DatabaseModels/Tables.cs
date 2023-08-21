@@ -1,6 +1,7 @@
 ﻿using StackExchange.Redis;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.CompilerServices;
 
 namespace CasinoGodsAPI.Models.DatabaseModels
 {
@@ -25,7 +26,5 @@ namespace CasinoGodsAPI.Models.DatabaseModels
         {
             ActiveTables = new HashSet<LobbyTableData>();
         }
-
-
     }
 }

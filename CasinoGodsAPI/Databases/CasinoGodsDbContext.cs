@@ -7,9 +7,8 @@ namespace CasinoGodsAPI.Data
 {
     public class CasinoGodsDbContext : DbContext
     {
-        public CasinoGodsDbContext(DbContextOptions options) : base(options)
-        {
-        }
+        public CasinoGodsDbContext(DbContextOptions options) : base(options) { }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Tables>()
@@ -29,10 +28,7 @@ namespace CasinoGodsAPI.Data
         public DbSet<Games> GamesList { get; set; }
         public DbSet<GamePlayerTable> GamePlusPlayersTable{ get; set; }
         public DbSet<Tables> TablesList { get; set; }
-        //public DbSet<Dealer> Dealers { get; set; }
         public DbSet<ActiveTablesDB>ActiveTables { get; set; }
-
-
     }
    
 }

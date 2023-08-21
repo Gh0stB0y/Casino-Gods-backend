@@ -1,6 +1,8 @@
-﻿namespace CasinoGodsAPI.Commands.Controllers.AdminController
+﻿using CasinoGodsAPI.DTOs;
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CasinoGodsAPI.Commands.Controllers.AdminController
 {
-    public class ManageTableCommand
-    {
-    }
+    public record ManageTableCommand(AdminManageTableDTO Obj):IRequest<IActionResult>; 
 }

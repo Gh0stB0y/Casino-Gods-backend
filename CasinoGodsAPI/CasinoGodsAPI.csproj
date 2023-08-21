@@ -40,7 +40,6 @@
     <Folder Include="Migrations\" />
     <Folder Include="Models\ControllerModels\" />
     <Folder Include="Queries\BackgroundServices\" />
-    <Folder Include="Queries\Controllers\AdminController\" />
     <Folder Include="Queries\GameServices\" />
     <Folder Include="Queries\SignalR\" />
   </ItemGroup>

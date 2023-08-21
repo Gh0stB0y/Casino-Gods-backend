@@ -17,6 +17,10 @@ using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using CasinoGodsAPI.Models;
 using System.Reflection;
+using CasinoGodsAPI;
+using MediatR;
+using CasinoGodsAPI.Handlers.Databases;
+using CasinoGodsAPI.Commands.Databases;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,9 +74,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     };
     });
 builder.Services.AddDbContext<CasinoGodsDbContext>(options =>
-options.UseSqlServer(builder.Configuration.GetConnectionString("FullStackConnectionString")));
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("FullStackConnectionString"));
+},ServiceLifetime.Scoped);
 
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetEntryAssembly()));
 
 builder.Services.AddCors(options =>
 {

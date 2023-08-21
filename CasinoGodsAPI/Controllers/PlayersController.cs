@@ -1,10 +1,4 @@
-﻿using CasinoGodsAPI.Data;
-using CasinoGodsAPI.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
-using StackExchange.Redis;
-using CasinoGodsAPI.Models.DatabaseModels;
+﻿using Microsoft.AspNetCore.Mvc;
 using CasinoGodsAPI.DTOs;
 using MediatR;
 using CasinoGodsAPI.Commands.Controllers.PlayerController;
@@ -12,14 +6,12 @@ using CasinoGodsAPI.Queries.Controllers.PlayerController;
 
 namespace CasinoGodsAPI.Controllers
 {
-
     [ApiController]
     [Route("api/[controller]")]
     public class PlayersController : Controller
     {
         private readonly IMediator _mediator;
-
-        public PlayersController(CasinoGodsDbContext CasinoGodsDbContext, IConfiguration configuration, IConnectionMultiplexer redis,IMediator mediator)
+        public PlayersController(IMediator mediator)
         {
             _mediator = mediator;
         }

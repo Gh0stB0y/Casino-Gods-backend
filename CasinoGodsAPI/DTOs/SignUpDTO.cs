@@ -11,24 +11,23 @@
         public static string CheckSignUpCredentials(SignUpDTO p)
         {
             string response = "";
-            if (p.password.Length < 8) response = ("Password too short");
-            if (!specialLetterGood(p)) response = ("Password does not contain a special character");
-            if (!passNumGood(p)) response = ("Password does not contain a number");
-            if (!checkLowecase(p)) response = ("Password does not contain lowercase letter");
-            if (!checkUppercase(p)) response = ("Password does not contain upercase letter");
+            if (p.password.Length < 8) response = "Password too short";
+            if (!specialLetterGood(p)) response = "Password does not contain a special character";
+            if (!passNumGood(p)) response = "Password does not contain a number";
+            if (!checkLowecase(p)) response = "Password does not contain lowercase letter";
+            if (!checkUppercase(p)) response = "Password does not contain upercase letter";
 
-            if (!ageGood(p)) response = ("User is not an adult");
-            if (!p.email.Contains('@')) response = ("Invalid email");
+            if (!ageGood(p)) response = "User is not an adult";
+            if (!p.email.Contains('@')) response = "Invalid email";
 
-            if (p.username.Length < 4) response = ("Username too short");
+            if (p.username.Length < 4) response = "Username too short";
 
             return response;
         }
-
         private static bool ageGood(SignUpDTO p)
         {
-            if ((p.birthdate.Year + 18) < DateTime.Today.Year) return true;
-            else if ((p.birthdate.Year + 18) == DateTime.Today.Year)
+            if (p.birthdate.Year + 18 < DateTime.Today.Year) return true;
+            else if (p.birthdate.Year + 18 == DateTime.Today.Year)
             {
                 if (p.birthdate.Month < DateTime.Today.Month) return true;
                 else if (p.birthdate.Month == DateTime.Today.Month)
@@ -59,7 +58,7 @@
             bool upperExist = false;
             foreach (char character in p.password)
             {
-                if (Char.IsUpper(character)) { upperExist = true; break; }
+                if (char.IsUpper(character)) { upperExist = true; break; }
             }
             return upperExist;
         }
@@ -68,7 +67,7 @@
             bool lowerExist = false;
             foreach (char character in p.password)
             {
-                if (Char.IsLower(character)) { lowerExist = true; break; }
+                if (char.IsLower(character)) { lowerExist = true; break; }
             }
             return lowerExist;
         }

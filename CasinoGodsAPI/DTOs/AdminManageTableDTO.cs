@@ -16,7 +16,7 @@
 
         public AdminManageTableDTO(int maxSeats)
         {
-            this.MaxSeats = maxSeats;
+            MaxSeats = maxSeats;
         }
 
         public bool CheckTable()
@@ -30,8 +30,9 @@
                 Decks < 1 ||
                 Decks > 10 ||
                 MaxSeats < 1 ||
-                MaxSeats > 10) return false;
-            else return true;
+                MaxSeats > 10) 
+                        return false;
+            else        return true;
         }
     }
 }

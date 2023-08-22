@@ -40,7 +40,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(opt =>
 builder.Services.AddSignalR();
 builder.Services.AddControllers();
 builder.Services.AddHostedService<LobbyService>();
-builder.Services.AddHostedService<TableService>();
+//builder.Services.AddHostedService<TableService>();
 
 builder.Services.AddLogging(loggingBuilder =>
 {

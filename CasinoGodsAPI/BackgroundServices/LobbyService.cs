@@ -3,37 +3,38 @@ using CasinoGodsAPI.Models;
 using CasinoGodsAPI.Models.DatabaseModels;
 using CasinoGodsAPI.TablesModel;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 using StackExchange.Redis;
+using System.Collections.Concurrent;
 using System.Reflection;
 
 namespace CasinoGodsAPI.Services
 {
     public class LobbyService : BackgroundService
     {
-        private readonly Dictionary<Type, Microsoft.AspNetCore.SignalR.IHubContext<Microsoft.AspNetCore.SignalR.Hub>> _hubContexts;
+        public static Dictionary<Type, IHubContext<Hub>> _hubContexts;
         private readonly ILogger<LobbyService> _logger;
         private CancellationTokenSource _cancellationTokenSource;
-        //public static List<LobbyTableData>ActiveTablesList { get; set; }
+        private static IServiceProvider _serviceProvider;
+        private static IConfiguration _configuration;
+        private static IConnectionMultiplexer _redis;
 
-        public LobbyService(IServiceProvider serviceProvider, ILogger<LobbyService> logger, IConfiguration configuration, IConnectionMultiplexer redis) {
+        public static ConcurrentDictionary<string, ManageTableClass> ManagedTablesObj = new ConcurrentDictionary<string, ManageTableClass>();
+        public static ConcurrentDictionary<string, int> UserCountAtTablesDictionary = new ConcurrentDictionary<string, int>();
+        public static ConcurrentDictionary<string, string> UserGroupDictionary = new ConcurrentDictionary<string, string>();
+        public static ConcurrentDictionary<string, HubCallerContext> UserContextDictionary = new ConcurrentDictionary<string, HubCallerContext>();
 
+
+        public LobbyService(IServiceProvider serviceProvider, ILogger<LobbyService> logger, IConfiguration configuration, IConnectionMultiplexer redis)
+        {
+
+            _serviceProvider = serviceProvider;
             _hubContexts = GetHubContexts(serviceProvider);
             _logger = logger;
+            _configuration = configuration;
+            _redis = redis;
         }
-        private Dictionary<Type, Microsoft.AspNetCore.SignalR.IHubContext<Microsoft.AspNetCore.SignalR.Hub>> GetHubContexts(IServiceProvider serviceProvider)
-        {
-            var hubContexts = new Dictionary<Type, Microsoft.AspNetCore.SignalR.IHubContext<Microsoft.AspNetCore.SignalR.Hub>>();
-            var hubTypes = Assembly.GetExecutingAssembly().GetTypes()
-                .Where(type => type.IsSubclassOf(typeof(LobbyHub)));
-            foreach (var hubType in hubTypes)
-            {
-                var hubContextType = typeof(Microsoft.AspNetCore.SignalR.IHubContext<>).MakeGenericType(hubType);
-                var hubContext = serviceProvider.GetRequiredService(hubContextType) as Microsoft.AspNetCore.SignalR.IHubContext<Microsoft.AspNetCore.SignalR.Hub>;
-                hubContexts.Add(hubType, hubContext);
-            }
-            return hubContexts;
-        }
-
+        
         //FUNKCJE PODSTAWOWE
         public override async Task StartAsync(CancellationToken cancellationToken)
         {
@@ -90,5 +91,48 @@ namespace CasinoGodsAPI.Services
             _cancellationTokenSource?.Cancel();
             await StopAsync(_cancellationTokenSource.Token);
         } //reczne wylaczenie
+
+        //CUSTOM FUNKCJE
+        private Dictionary<Type, IHubContext<Hub>> GetHubContexts(IServiceProvider serviceProvider)
+        {
+            var hubContexts = new Dictionary<Type, IHubContext<Hub>>();
+            var hubTypes = Assembly.GetExecutingAssembly().GetTypes()
+                .Where(type => type.IsSubclassOf(typeof(LobbyHub)));
+
+            foreach (var hubType in hubTypes)
+            {
+                var hubContextType = typeof(IHubContext<>).MakeGenericType(hubType);
+                var hubContext = serviceProvider.GetRequiredService(hubContextType) as IHubContext<Hub>;
+                hubContexts.Add(hubType, hubContext);
+            }
+            return hubContexts;
+        }
+        //
+
+
+        //OBSLUGA STOLOW
+        public static void MakeTableActive(string TableId)
+        {
+            if (!ManagedTablesObj[TableId].IsActive && !ManagedTablesObj[TableId].GameInProgress)
+            {
+                ManagedTablesObj[TableId].IsActive = true;
+                Task.Run(() => ManagedTablesObj[TableId].StartGame());
+            }
+        }
+        public static void MakeTableInactive(string TableId)
+        {
+            ManagedTablesObj[TableId].IsActive = false;
+        }
+        public static void AddTable(string TableId, string Game)
+        {
+            UserCountAtTablesDictionary.TryAdd(TableId, 0);
+            ManagedTablesObj.TryAdd(TableId, new ManageTableClass(TableId, Game, _serviceProvider, _configuration, _redis));
+        }
+        public static void DeleteTable(string TableId)
+        {
+            UserCountAtTablesDictionary.TryRemove(TableId, out _);
+            ManagedTablesObj.TryRemove(TableId, out _);
+        }
+        //
     }   
 }

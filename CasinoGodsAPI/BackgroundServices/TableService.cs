@@ -7,18 +7,18 @@ using System.Reflection;
 
 namespace CasinoGodsAPI.Services
 {
-    public class TableService:BackgroundService
+  /*  public class TableService:BackgroundService
     {
         public static Dictionary<Type, Microsoft.AspNetCore.SignalR.IHubContext<Microsoft.AspNetCore.SignalR.Hub>> _hubContexts;
         private readonly ILogger<LobbyService> _logger;
         private CancellationTokenSource _cancellationTokenSource;
         private static IServiceProvider _serviceProvider;
         private static IConfiguration _configuration;
-        private static IConnectionMultiplexer _redis; 
-   
+        private static IConnectionMultiplexer _redis;
+
         public static ConcurrentDictionary<string, ManageTableClass> ManagedTablesObj = new ConcurrentDictionary<string, ManageTableClass>();
         public static ConcurrentDictionary<string, int> UserCountAtTablesDictionary = new ConcurrentDictionary<string, int>();
-        public static ConcurrentDictionary<string, string> UserGroupDictionary = new ConcurrentDictionary<string, string>();        
+        public static ConcurrentDictionary<string, string> UserGroupDictionary = new ConcurrentDictionary<string, string>();
         public static ConcurrentDictionary<string, HubCallerContext> UserContextDictionary = new ConcurrentDictionary<string, HubCallerContext>();
 
         public TableService(IServiceProvider serviceProvider, ILogger<LobbyService> logger, IConfiguration configuration, IConnectionMultiplexer redis)
@@ -61,9 +61,9 @@ namespace CasinoGodsAPI.Services
                     // akcje do wykonania przy cancellu
                     break;
                 }
-                foreach(var Table in ManagedTablesObj.Values) { Console.WriteLine("ManagedTablesObj --> Table: " + Table.Id+", IsActive: "+Table.IsActive);}
-                foreach(var Count in UserCountAtTablesDictionary) { Console.WriteLine("UserCountAtTablesDictionary --> Table: " + Count.Key + ", Count: " + Count.Value); }
-                foreach(var User in UserGroupDictionary) { Console.WriteLine("UserGroupDictionary --> User: " + User.Key + " belongs to group/table: " + User.Value); }
+                foreach (var Table in ManagedTablesObj.Values) { Console.WriteLine("ManagedTablesObj --> Table: " + Table.Id + ", IsActive: " + Table.IsActive); }
+                foreach (var Count in UserCountAtTablesDictionary) { Console.WriteLine("UserCountAtTablesDictionary --> Table: " + Count.Key + ", Count: " + Count.Value); }
+                foreach (var User in UserGroupDictionary) { Console.WriteLine("UserGroupDictionary --> User: " + User.Key + " belongs to group/table: " + User.Value); }
                 foreach (var User in UserContextDictionary) { Console.WriteLine("UserContextDictionary --> User: " + User.Key + " has Context: " + User.Value.ConnectionId); }
                 //LookForEmptyTables();
                 await Task.Delay(TimeSpan.FromSeconds(10));
@@ -80,7 +80,7 @@ namespace CasinoGodsAPI.Services
             _cancellationTokenSource?.Cancel();
             await StopAsync(_cancellationTokenSource.Token);
         } //reczne wylaczenie        
-        
+
         public static void MakeTableActive(string TableId)
         {
             if (!ManagedTablesObj[TableId].IsActive && !ManagedTablesObj[TableId].GameInProgress)
@@ -97,12 +97,12 @@ namespace CasinoGodsAPI.Services
         public static void AddTable(string TableId, string Game)
         {
             UserCountAtTablesDictionary.TryAdd(TableId, 0);
-            ManagedTablesObj.TryAdd(TableId,new ManageTableClass(TableId,Game, _serviceProvider, _configuration, _redis));
+            ManagedTablesObj.TryAdd(TableId, new ManageTableClass(TableId, Game, _serviceProvider, _configuration, _redis));
         }
         public static void DeleteTable(string TableId)
-        {           
-            UserCountAtTablesDictionary.TryRemove(TableId,out _);
-            ManagedTablesObj.TryRemove(TableId,out _);
+        {
+            UserCountAtTablesDictionary.TryRemove(TableId, out _);
+            ManagedTablesObj.TryRemove(TableId, out _);
         }
-    }
+    }*/
 }

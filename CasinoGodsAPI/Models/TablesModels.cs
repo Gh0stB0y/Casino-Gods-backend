@@ -169,27 +169,25 @@ namespace CasinoGodsAPI.Models
             if (TableType == typeof(RouletteLobby)) BettingTimes = SplitBettingTime(ActiveTable.BetTime);
             else BettingTimes.Add(ActiveTable.BetTime);
             
-            await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("ToggleBetting",true,""); //odblokowuje betowanie, restuje layout,startuje betowanie
+            await LobbyService._hubContexts[TableType].Clients.Group(Id).SendAsync("ToggleBetting",true,""); //odblokowuje betowanie, restuje layout,startuje betowanie
 
             LookForInactivePlayers(Id); //Find JWT of user sitting at the table in Redis. If not found, kick user out
             
             if (TableType == typeof(RouletteLobby))
             {
                 await Task.Delay(TimeSpan.FromSeconds(BettingTimes[0]), cancellationTokenSource.Token).ContinueWith(t => { });
-                if (!BetsClosed)await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("BetsAreClosing");
+                if (!BetsClosed)await LobbyService._hubContexts[TableType].Clients.Group(Id).SendAsync("BetsAreClosing");
                 await Task.Delay(TimeSpan.FromSeconds(BettingTimes[1]), cancellationTokenSource.Token).ContinueWith(t => { });
-                await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("ToggleBetting", false, ClosedBetsToken);//blokuje betowanie, pokazuje animacje losowania 
+                await LobbyService._hubContexts[TableType].Clients.Group(Id).SendAsync("ToggleBetting", false, ClosedBetsToken);//blokuje betowanie, pokazuje animacje losowania 
             }
             else
             {
                 await Task.Delay(TimeSpan.FromSeconds(BettingTimes[0]), cancellationTokenSource.Token).ContinueWith(t => { });                
-                await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("ToggleBetting", false, ClosedBetsToken);//blokuje betowanie, pokazuje animacje losowania 
+                await LobbyService._hubContexts[TableType].Clients.Group(Id).SendAsync("ToggleBetting", false, ClosedBetsToken);//blokuje betowanie, pokazuje animacje losowania 
             }
             GameIsBeingPlayedRightNow = true;
             
         }
-        
-
         private List<int> SplitBettingTime(int betTime)
         {
             int RoundingInterval = 5;
@@ -210,7 +208,7 @@ namespace CasinoGodsAPI.Models
         {
             List<bool> ActivePlayers = Enumerable.Repeat(true, ActiveTable.Maxseats).ToList();
 
-            var users = TableService.UserGroupDictionary.Where(t => t.Value == Id).Select(u=>u.Key).ToList();
+            var users = LobbyService.UserGroupDictionary.Where(t => t.Value == Id).Select(u=>u.Key).ToList();
             if (users.Count > ActivePlayers.Count) { Console.WriteLine("Too many players"); }
             else
             {
@@ -220,14 +218,14 @@ namespace CasinoGodsAPI.Models
                     bool UserisActive=await GlobalFunctions.LookForTokenGlobal(user,redisDbLogin,redisDbJwt,_configuration);
                     if (!UserisActive)
                     {
-                        var claimsIdentity = (ClaimsIdentity)TableService.UserContextDictionary[user].User.Identity;
+                        var claimsIdentity = (ClaimsIdentity)LobbyService.UserContextDictionary[user].User.Identity;
                         var username = claimsIdentity.Claims.FirstOrDefault(c => c.Type == "Username").Value;
                         if (user != username) Console.WriteLine("Passed username and username from claim indentity do not match, username(from claims):"+username +", user:"+user);
 
                         else
                         {
-                            var ConnectionId = TableService.UserContextDictionary[user].ConnectionId;
-                            await TableService._hubContexts[TableType].Clients.Client(ConnectionId).SendAsync("Disconnect", "Session expired, log in again");
+                            var ConnectionId = LobbyService.UserContextDictionary[user].ConnectionId;
+                            await LobbyService._hubContexts[TableType].Clients.Client(ConnectionId).SendAsync("Disconnect", "Session expired, log in again");
                         }
                     }
                     iterator++;
@@ -261,7 +259,7 @@ namespace CasinoGodsAPI.Models
         }
         private async Task DragonTigerPlayingPhase()
         {
-            await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Game Starts!");
+            await LobbyService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Game Starts!");
             Random random = new Random();
             List<int> Cards = CardsOnBoards(2);
             List<double> CardsVal =new List<double>() { Math.Floor((double)Cards[0] / 4), Math.Floor((double)Cards[1] / 4) };
@@ -278,7 +276,7 @@ namespace CasinoGodsAPI.Models
                 else { report = "Tie!"; WinningPlace = 2; }
             }
             await Task.Delay(TimeSpan.FromSeconds(ActiveTable.ActionTime));
-            await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("Cards", Cards, report);
+            await LobbyService._hubContexts[TableType].Clients.Group(Id).SendAsync("Cards", Cards, report);
             DragonTigerConvertBettingLists();
             //await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", report);
 
@@ -288,11 +286,11 @@ namespace CasinoGodsAPI.Models
         }
         public async Task RoulettePlayingPhase()
         {
-            await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Game Starts! Ball is released!");
+            await LobbyService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Game Starts! Ball is released!");
             Random random = new Random();
             int WinningNumber = random.Next(0, 37);
             await Task.Delay(TimeSpan.FromSeconds(10)); //symulacja krecenia sie kulki
-            await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Winning number: "+ WinningNumber);
+            await LobbyService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Winning number: "+ WinningNumber);
             //await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("Winning number",WinningNumber);
             RouletteConvertBettingLists();
             Console.WriteLine("Wylosowana liczba: " + WinningNumber);
@@ -470,23 +468,23 @@ namespace CasinoGodsAPI.Models
             {
                 if (player.Value > 0) 
                 { 
-                    var ConnectionId = TableService.UserContextDictionary[player.Key].ConnectionId;
-                    await TableService._hubContexts[TableType].Clients.Client(ConnectionId).SendAsync("Win","Congratulations! You win "+player.Value, player.Value);
+                    var ConnectionId = LobbyService.UserContextDictionary[player.Key].ConnectionId;
+                    await LobbyService._hubContexts[TableType].Clients.Client(ConnectionId).SendAsync("Win","Congratulations! You win "+player.Value, player.Value);
                     if (player.Value > MaxWin) { MaxWin = player.Value; MaxPlayers.Clear(); MaxPlayers.Add(player.Key); }
                     else if (player.Value == MaxWin) MaxPlayers.Add(player.Key);
                     else { }                    
                 }
                 else { Console.WriteLine(player.Key + " chuja wygral"); }
             }
-            await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Players with biggest winnings this round:" + string.Join(", ", MaxPlayers));
+            await LobbyService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Players with biggest winnings this round:" + string.Join(", ", MaxPlayers));
             if (CardsPlayed >= RedCard) 
             {
-                await TableService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Shuffling cards, please wait...");
+                await LobbyService._hubContexts[TableType].Clients.Group(Id).SendAsync("TableChatReports", "Shuffling cards, please wait...");
                 ShuffleDecks(ActiveTable.Decks);
                 await Task.Delay(TimeSpan.FromSeconds(5));
             }
             GameIsBeingPlayedRightNow = false;
-            if (TableService.UserCountAtTablesDictionary[Id] < 1) { TableService.MakeTableInactive(Id); LobbyHub.DeleteTableInstance(Id); }
+            if (LobbyService.UserCountAtTablesDictionary[Id] < 1) { LobbyService.MakeTableInactive(Id); LobbyHub.DeleteTableInstance(Id); }
             else IsActive = true;
         }
         private async Task UserClaimUpdate()
@@ -504,13 +502,13 @@ namespace CasinoGodsAPI.Models
            }
            foreach(var player in Profit)
            {
-                var ConnectionId = TableService.UserContextDictionary[player.Key].ConnectionId;
-                var claimsIdentity = (ClaimsIdentity)TableService.UserContextDictionary[player.Key].User.Identity;
+                var ConnectionId = LobbyService.UserContextDictionary[player.Key].ConnectionId;
+                var claimsIdentity = (ClaimsIdentity)LobbyService.UserContextDictionary[player.Key].User.Identity;
 
                 var RoleClaim = claimsIdentity.FindFirst("Role");
                 var BankrollClaim= claimsIdentity.FindFirst("Current bankroll");
                 var InitialBankrollClaim = claimsIdentity.FindFirst("Initial bankroll");
-                if (BankrollClaim == null|| InitialBankrollClaim==null|| RoleClaim==null) await TableService._hubContexts[TableType].Clients.Client(ConnectionId).SendAsync("Disconnect", "Claims Error");
+                if (BankrollClaim == null|| InitialBankrollClaim==null|| RoleClaim==null) await LobbyService._hubContexts[TableType].Clients.Client(ConnectionId).SendAsync("Disconnect", "Claims Error");
                 else
                 {
                     int BankrollClaim_int = int.Parse(BankrollClaim.Value);
@@ -531,7 +529,7 @@ namespace CasinoGodsAPI.Models
                     claimsIdentity.RemoveClaim(BankrollClaim);
                     claimsIdentity.AddClaim(newBankrollClaim);
                     int ProfitToSent = BankrollClaim_int + player.Value - int.Parse(InitialBankrollClaim.Value);
-                    await TableService._hubContexts[TableType].Clients.Client(ConnectionId).SendAsync("Bankroll", newBankrollClaim.Value, ProfitToSent.ToString());
+                    await LobbyService._hubContexts[TableType].Clients.Client(ConnectionId).SendAsync("Bankroll", newBankrollClaim.Value, ProfitToSent.ToString());
                 }
            }
         }

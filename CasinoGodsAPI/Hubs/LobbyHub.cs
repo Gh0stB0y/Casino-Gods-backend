@@ -32,19 +32,24 @@ namespace CasinoGodsAPI.TablesModel
         public override async Task OnConnectedAsync()
         {
             await base.OnConnectedAsync();
+            string bankroll;
             var query = Context.GetHttpContext().Request.Query;
             string paramJWT = query["param1"].ToString();
             string paramUName = query["param2"].ToString();
             
-            string newJWT=await GlobalFunctions.RefreshTokenGlobal(paramJWT,paramUName, redisDbLogin, redisDbJwt, _configuration); 
-            if (newJWT == null || newJWT == "Session expired, log in again" || newJWT == "Redis data error, log in again")await Clients.Caller.SendAsync("Disconnect",newJWT);
+            string newJWT=await GlobalFunctions.RefreshTokenGlobal(paramJWT,paramUName, redisDbLogin, redisDbJwt, _configuration);
+            if (newJWT == null || newJWT == "Session expired, log in again" || newJWT == "Redis data error, log in again") await Clients.Caller.SendAsync("Disconnect", newJWT);
 
+
+            //SET USER ROLE
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwtSecurityToken = tokenHandler.ReadJwtToken(newJWT);
-            string UserRole = jwtSecurityToken.Claims.SingleOrDefault(c => c.Type == ClaimTypes.Role).Value;
-            string bankroll;
+            string UserRole = jwtSecurityToken.Claims.SingleOrDefault(c => c.Type == ClaimTypes.Role).Value;            
             if (UserRole == "Guest") bankroll = 1000.ToString();
             else bankroll = _casinoGodsDbContext.Players.Where(c => c.Username == paramUName).Select(p => p.Bankroll).FirstOrDefaultAsync().Result.ToString();
+            //
+
+            //SET CLAIMS IDENTITY
             var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
             var Claims = new List<Claim>()
              { new Claim("ConnectionID", Context.ConnectionId),
@@ -55,10 +60,14 @@ namespace CasinoGodsAPI.TablesModel
                new Claim("Current bankroll", bankroll)
              };
             claimsIdentity.AddClaims(Claims);
-            TableService.UserContextDictionary.TryAdd(paramUName, Context);
-            string report = claimsIdentity.Claims.SingleOrDefault(c => c.Type == "Username").Value + " has entered the chat";
+            //
+            
+            //SEND
+            string report = paramUName + " has entered the chat";
+            LobbyService.UserContextDictionary.TryAdd(paramUName, Context);
             await Clients.Others.SendAsync("ChatReports", report);
             await Clients.Caller.SendAsync("JwtUpdate", newJWT);
+            //
         }
         public override async Task OnDisconnectedAsync(Exception exception)
         {            
@@ -67,99 +76,63 @@ namespace CasinoGodsAPI.TablesModel
             var bankroll = int.Parse(claimsIdentity.Claims.SingleOrDefault(c => c.Type == "Current bankroll").Value);
             var profit = bankroll- int.Parse(claimsIdentity.Claims.SingleOrDefault(c => c.Type == "Initial bankroll").Value);
             var role= claimsIdentity.Claims.SingleOrDefault(c => c.Type == "Role").Value;
+
+
             if (username == null) Console.WriteLine("CRITICAL ERROR! USERNAME NOT FOUND");
             else
             {
                 if (role != "Guest")
                 {
+                    //SET PLAYER BANKROLL AND PROFIT TO DATABASE
                     var player = await _casinoGodsDbContext.Players.SingleOrDefaultAsync(p => p.Username == username);
-                    if (player == null) Console.WriteLine("CRITICAL ERROR! USERNAME NOT FOUND IN DATABASE");
-                    else { player.Bankroll = bankroll; player.Profit += profit; await _casinoGodsDbContext.SaveChangesAsync(); }
+                    if (player == null)
+                    {
+                        Console.WriteLine("CRITICAL ERROR! USERNAME NOT FOUND IN DATABASE");
+                    }
+                    else 
+                    { 
+                        player.Bankroll = bankroll; 
+                        player.Profit += profit; await _casinoGodsDbContext.SaveChangesAsync(); 
+                    }
+                    //
                 }
+
+                //DELETE USER DATA FROM DICTIONARIES RELATED TO TABLES
+                bool result = LobbyService.UserGroupDictionary.TryGetValue(username, out string tableId);
+                if (result)
+                {
+                    LobbyService.UserGroupDictionary.TryRemove(username, out _);
+                    LobbyService.UserCountAtTablesDictionary[tableId]--;
+                    if (LobbyService.UserCountAtTablesDictionary[tableId] < 1) DeleteTableInstance(tableId);
+                }
+                else
+                {
+                    Console.WriteLine("Disconnected user was not seating at any table");
+                }
+                //
+
+                //SEND
+                LobbyService.UserContextDictionary.TryRemove(username, out _);
+                string report = username + " has left the chat";
+                await Clients.Others.SendAsync("ChatReports", report);
+                await base.OnDisconnectedAsync(exception);
+                //
             }
-            string tableId;
-            bool result = TableService.UserGroupDictionary.TryGetValue(username, out tableId);
-            if (result)
-            {
-                TableService.UserContextDictionary.TryRemove(username, out _);
-                TableService.UserGroupDictionary.TryRemove(username,out _);
-                TableService.UserCountAtTablesDictionary[tableId]--;
-                if (TableService.UserCountAtTablesDictionary[tableId] < 1) DeleteTableInstance(tableId);
-            }
-            else Console.WriteLine("Disconnected user was not seating at any table");
-            TableService.UserContextDictionary.TryRemove(username, out _);
-            string report = username + " has left the chat";
-            await Clients.Others.SendAsync("ChatReports", report);
-            await base.OnDisconnectedAsync(exception);
         }
+
+        //SENDING CHAT MESSAGES
         public async Task ChatMessages(string username, string message) 
         {
             await Clients.Others.SendAsync("ChatMessages", username, message);
         }
         public async Task TableChatMessages(string username,string message)
         {  
-            string tableId = TableService.UserGroupDictionary[username];
+            string tableId = LobbyService.UserGroupDictionary[username];
             await Clients.Group(tableId).SendAsync("TableChatMessages", username, message);
         }
-        public async Task GetTableData() 
-        {
-            var AllActiveTables=await _casinoGodsDbContext.ActiveTables.ToListAsync();
-            if (AllActiveTables.Count == 0) {
-                TableService.UserCountAtTablesDictionary.Clear();await AddBasicTables(); 
-                foreach (var table in ActiveTables) { TableService.AddTable(table.TableInstanceId.ToString(), table.Game); }
-            }
-            else{AllActiveTables = ActiveTables;}
-            
-            string type=GetType().Name.Replace("Lobby","");
-            Console.WriteLine(type);
-            if (type == "DragonTiger") type = "Dragon Tiger";
-            var list = ActiveTables.Where(g => g.Game == type);
-            var listToSend = new List<LobbyTableDataDTO>();
-            foreach (var table in list) 
-            {
-                var tableObj = new LobbyTableDataDTO(table);
-                tableObj.currentSeats = TableService.UserCountAtTablesDictionary[table.TableInstanceId.ToString()];
-                listToSend.Add(tableObj); 
-            }          
-            await Clients.Caller.SendAsync("TablesData", listToSend);
-        } 
-        public async Task<bool> CheckFullTable(string TableId)
-        {
-            int CurrentUsers = TableService.UserCountAtTablesDictionary[TableId];
-            int MaxUsers =  ActiveTables.SingleOrDefault(t => t.TableInstanceId.ToString() == TableId).Maxseats;    
-            if (MaxUsers != default)
-            {
-                if (CurrentUsers < MaxUsers) return true; 
-                else return false;
-            }
-            throw new HubException("Data error");
-        }
-        public async Task AddBasicTables()
-        {
-            var NewTables = await _casinoGodsDbContext.Tables.ToListAsync();
-            var list=new List<ActiveTablesDB>();
-            foreach (var table in NewTables) 
-            {
-                var TableInstance = new ActiveTablesDB() { 
-                
-                    TableInstanceId = Guid.NewGuid(),
-                    Name = table.CKname,
-                    Game = table.CKGame,
-                    MinBet = table.MinBet,
-                    MaxBet = table.MaxBet,
-                    BetTime = table.BetTime,
-                    Maxseats = table.Maxseats,
-                    ActionTime = table.ActionTime,
-                    Sidebet1 = table.Sidebet1,
-                    Sidebet2 = table.Sidebet2,
-                    Decks = table.Decks
-                };
-                list.Add(TableInstance);                               
-            }    
-            foreach (var activeTable in list) { await _casinoGodsDbContext.ActiveTables.AddAsync(activeTable); }
-            ActiveTables = list;
-            await _casinoGodsDbContext.SaveChangesAsync();
-        }   
+        //
+
+        //ENTER AND QUIT TABLE
         public async Task<bool> EnterTable(string TableId, string jwt)
         {
             string newJWT = await GlobalFunctions.RefreshTokenGlobal(jwt, redisDbLogin, redisDbJwt, _configuration);
@@ -174,17 +147,17 @@ namespace CasinoGodsAPI.TablesModel
                 claimsIdentity.AddClaim(newJwtClaim);
             }
             var username = claimsIdentity.Claims.FirstOrDefault(c => c.Type == "Username").Value;
-            if (!TableService.UserGroupDictionary.ContainsKey(username))
+            if (!LobbyService.UserGroupDictionary.ContainsKey(username))
             {
                 bool TableNotFull;
                 try { TableNotFull = await CheckFullTable(TableId); }
                 catch (HubException ex) { Console.WriteLine(ex.Message); return false; }
                 if (TableNotFull)
                 {
-                    if (TableService.UserCountAtTablesDictionary[TableId] < 1 && !TableService.ManagedTablesObj[TableId].IsActive) { TableService.MakeTableActive(TableId); }
-                    TableService.UserGroupDictionary.TryAdd(username, TableId);
-                    TableService.UserCountAtTablesDictionary[TableId]++;
-                    TableService.ManagedTablesObj[TableId].AllBetsPlaced.TryAdd(username, false);
+                    if (LobbyService.UserCountAtTablesDictionary[TableId] < 1 && !LobbyService.ManagedTablesObj[TableId].IsActive) { LobbyService.MakeTableActive(TableId); }
+                    LobbyService.UserGroupDictionary.TryAdd(username, TableId);
+                    LobbyService.UserCountAtTablesDictionary[TableId]++;
+                    LobbyService.ManagedTablesObj[TableId].AllBetsPlaced.TryAdd(username, false);
                     await Groups.AddToGroupAsync(Context.ConnectionId, TableId);
                     string tableReport = username + " has entered the table";
                     await Clients.OthersInGroup(TableId).SendAsync("TableChatReports", tableReport);
@@ -194,7 +167,7 @@ namespace CasinoGodsAPI.TablesModel
 
                 var Table = ActiveTables.SingleOrDefault(i => i.TableInstanceId.ToString() == TableId);
                 var SameTypeInstances = ActiveTables.Where(t => t.Game == Table.Game && t.Name == Table.Name).ToList();
-                if (SameTypeInstances.Where(t => t.Maxseats > TableService.UserCountAtTablesDictionary[t.TableInstanceId.ToString()]).ToList().Count<1) AddNewTableInstance(TableId);
+                if (SameTypeInstances.Where(t => t.Maxseats > LobbyService.UserCountAtTablesDictionary[t.TableInstanceId.ToString()]).ToList().Count < 1) AddNewTableInstance(TableId);
                 return TableNotFull;
             }
             else
@@ -203,6 +176,73 @@ namespace CasinoGodsAPI.TablesModel
                 return false;
             }
         }
+        public async Task QuitTable(string jwt)
+        {
+            string newJWT = await GlobalFunctions.RefreshTokenGlobal(jwt, redisDbLogin, redisDbJwt, _configuration);
+            if (newJWT == null || newJWT == "Session expired, log in again" || newJWT == "Redis data error, log in again") { await Clients.Caller.SendAsync("Disconnect", newJWT); return; }
+
+            var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
+            var JwtClaim = claimsIdentity.FindFirst("Jwt");
+            if (JwtClaim != null)
+            {
+                var newJwtClaim = new Claim(JwtClaim.Type, newJWT);
+                claimsIdentity.RemoveClaim(JwtClaim);
+                claimsIdentity.AddClaim(newJwtClaim);
+            }
+            var username = claimsIdentity.Claims.FirstOrDefault(c => c.Type == "Username").Value;
+
+            string tableId = LobbyService.UserGroupDictionary[username];
+            LobbyService.UserGroupDictionary.TryRemove(username, out _);
+            LobbyService.UserCountAtTablesDictionary[tableId]--;
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, tableId);
+            //if (TableService.UserCountAtTablesDictionary[tableId] < 1){ TableService.MakeTableInactive(tableId); DeleteTableInstance(tableId);}
+            string tableReport = username + " has left the table";
+            await Clients.OthersInGroup(tableId).SendAsync("TableChatReports", tableReport);
+            await Clients.Caller.SendAsync("JwtUpdate", newJWT);
+        }
+        //
+        
+        //QUERIES
+        public async Task GetTableData() 
+        {
+            var AllActiveTables=await _casinoGodsDbContext.ActiveTables.ToListAsync();
+            if (AllActiveTables.Count == 0) {
+                LobbyService.UserCountAtTablesDictionary.Clear();await AddBasicTables(); 
+                foreach (var table in ActiveTables) { LobbyService.AddTable(table.TableInstanceId.ToString(), table.Game); }
+            }
+            else{AllActiveTables = ActiveTables;}
+            
+            string type=GetType().Name.Replace("Lobby","");
+            Console.WriteLine(type);
+            if (type == "DragonTiger") type = "Dragon Tiger";
+            var list = ActiveTables.Where(g => g.Game == type);
+            var listToSend = new List<LobbyTableDataDTO>();
+            foreach (var table in list) 
+            {
+                var tableObj = new LobbyTableDataDTO(table);
+                tableObj.currentSeats = LobbyService.UserCountAtTablesDictionary[table.TableInstanceId.ToString()];
+                listToSend.Add(tableObj); 
+            }          
+            await Clients.Caller.SendAsync("TablesData", listToSend);
+        } 
+        public async Task<bool> CheckFullTable(string TableId)
+        {
+            int CurrentUsers = LobbyService.UserCountAtTablesDictionary[TableId];
+            int MaxUsers =  ActiveTables.SingleOrDefault(t => t.TableInstanceId.ToString() == TableId).Maxseats;    
+            if (MaxUsers != default)
+            {
+                if (CurrentUsers < MaxUsers) return true; 
+                else return false;
+            }
+            throw new HubException("Data error");
+        }
+        public static int GetCurrentPlayers(string id)
+        {
+            return LobbyService.UserCountAtTablesDictionary[id];
+        }
+        //
+
+        //MANAGE TABLE INSTANCE
         private static void AddNewTableInstance(string TableId)
         {
             var ParentTable = ActiveTables.SingleOrDefault(t => t.TableInstanceId.ToString() == TableId);
@@ -222,9 +262,9 @@ namespace CasinoGodsAPI.TablesModel
                     Sidebet2 = ParentTable.Sidebet2,
                     Decks = ParentTable.Decks
                 };
-                TableService.UserCountAtTablesDictionary.TryAdd(ChildTable.TableInstanceId.ToString(), 0);
+                LobbyService.UserCountAtTablesDictionary.TryAdd(ChildTable.TableInstanceId.ToString(), 0);
                 ActiveTables.Add(ChildTable);
-                TableService.AddTable(ChildTable.TableInstanceId.ToString(), ChildTable.Game);
+                LobbyService.AddTable(ChildTable.TableInstanceId.ToString(), ChildTable.Game);
             }
             else Console.WriteLine("Parent Table not found");
         }
@@ -237,128 +277,119 @@ namespace CasinoGodsAPI.TablesModel
                 var SameTypeInstances = ActiveTables.Where(t => t.Game == Table.Game && t.Name == Table.Name).ToList();
                 int count = 0;
                 foreach (var Instance in SameTypeInstances) {
-                    if (TableService.UserCountAtTablesDictionary[Instance.TableInstanceId.ToString()] < Instance.Maxseats) count++;
+                    if (LobbyService.UserCountAtTablesDictionary[Instance.TableInstanceId.ToString()] < Instance.Maxseats) count++;
                 }
                 if(count>1)AllTablesFull = false;
                 if (SameTypeInstances.Count > 1 && AllTablesFull == false)
                 {
                     //TableService.UserCountAtTablesDictionary.TryRemove(TableId,out _);
                     ActiveTables.Remove(Table);
-                    TableService.DeleteTable(TableId);
+                    LobbyService.DeleteTable(TableId);
 
-                    var UsersOfDeletedTable = TableService.UserGroupDictionary.Where(u => u.Value == TableId).ToList();
+                    var UsersOfDeletedTable = LobbyService.UserGroupDictionary.Where(u => u.Value == TableId).ToList();
                     if (UsersOfDeletedTable.Count > 0)
                     {
                         foreach (var User in UsersOfDeletedTable)
                         {
-                            TableService.UserGroupDictionary.TryRemove(User.Key,out _);
+                            LobbyService.UserGroupDictionary.TryRemove(User.Key,out _);
                         }
                     }
                 }
                 else 
                 {
-                    TableService.MakeTableInactive(TableId);
+                    LobbyService.MakeTableInactive(TableId);
                 }
             }
         }
-        public async Task QuitTable(string jwt)
+        public async Task AddBasicTables()
         {
-            string newJWT = await GlobalFunctions.RefreshTokenGlobal(jwt, redisDbLogin, redisDbJwt, _configuration);
-            if (newJWT == null || newJWT == "Session expired, log in again" || newJWT == "Redis data error, log in again") { await Clients.Caller.SendAsync("Disconnect", newJWT); return; }
-
-            var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
-            var JwtClaim = claimsIdentity.FindFirst("Jwt");
-            if (JwtClaim != null)
+            var NewTables = await _casinoGodsDbContext.Tables.ToListAsync();
+            var list = new List<ActiveTablesDB>();
+            foreach (var table in NewTables)
             {
-                var newJwtClaim = new Claim(JwtClaim.Type, newJWT);
-                claimsIdentity.RemoveClaim(JwtClaim);
-                claimsIdentity.AddClaim(newJwtClaim);
-            }
-            var username = claimsIdentity.Claims.FirstOrDefault(c => c.Type == "Username").Value;
+                var TableInstance = new ActiveTablesDB()
+                {
 
-            string tableId = TableService.UserGroupDictionary[username];
-            TableService.UserGroupDictionary.TryRemove(username, out _);
-            TableService.UserCountAtTablesDictionary[tableId]--;
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, tableId);
-            //if (TableService.UserCountAtTablesDictionary[tableId] < 1){ TableService.MakeTableInactive(tableId); DeleteTableInstance(tableId);}
-            string tableReport = username + " has left the table";
-            await Clients.OthersInGroup(tableId).SendAsync("TableChatReports", tableReport);
-            await Clients.Caller.SendAsync("JwtUpdate", newJWT);
+                    TableInstanceId = Guid.NewGuid(),
+                    Name = table.CKname,
+                    Game = table.CKGame,
+                    MinBet = table.MinBet,
+                    MaxBet = table.MaxBet,
+                    BetTime = table.BetTime,
+                    Maxseats = table.Maxseats,
+                    ActionTime = table.ActionTime,
+                    Sidebet1 = table.Sidebet1,
+                    Sidebet2 = table.Sidebet2,
+                    Decks = table.Decks
+                };
+                list.Add(TableInstance);
+            }
+            foreach (var activeTable in list) { await _casinoGodsDbContext.ActiveTables.AddAsync(activeTable); }
+            ActiveTables = list;
+            await _casinoGodsDbContext.SaveChangesAsync();
         }
-        public static int GetCurrentPlayers(string id)
-        {
-            return 0;
-            //return TableService.UserCountAtTablesDictionary[id];
-        }
-        public async Task PlaceBet(string jwt, string TableId,List<int>bets)
-        {
-            
-        }
-        public async Task TakeASeat(string jwt,int seatID)
-        {
-           
-        }
-        public async Task<bool> IsBettingEnabled() { return true; }
-        public async Task ToggleBetting(bool enabled, string TableId) { await Clients.Group(TableId).SendAsync("ToggleBetting", enabled); }
-        public async Task SendBets(List<int> Bets,string jwt,string ClosedBetsToken)
+        //
+
+        //IN-GAME COMMANDS
+        public async Task SendBets(List<int> Bets, string jwt, string ClosedBetsToken)
         {
             bool JwtValid = await GlobalFunctions.LookForJWTGlobal(jwt, redisDbLogin, redisDbJwt, _configuration);
-            if(!JwtValid) await Clients.Caller.SendAsync("Disconnect", "Session expired, log in again");
-           
+            if (!JwtValid) await Clients.Caller.SendAsync("Disconnect", "Session expired, log in again");
+
             else
             {
                 var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
                 var UsernameClaim = claimsIdentity.FindFirst("Username");
-                if(UsernameClaim == null) await Clients.Caller.SendAsync("Disconnect", "Claims Error");
+                if (UsernameClaim == null) await Clients.Caller.SendAsync("Disconnect", "Claims Error");
                 else
                 {
-                    string TableId = TableService.UserGroupDictionary[UsernameClaim.Value];
-                    if (TableService.ManagedTablesObj[TableId].BetsClosed == false)
+                    string TableId = LobbyService.UserGroupDictionary[UsernameClaim.Value];
+                    if (LobbyService.ManagedTablesObj[TableId].BetsClosed == false)
                     {
-                        if (!TableService.ManagedTablesObj[TableId].IsBettingListVoid(Bets)&& !TableService.ManagedTablesObj[TableId].AllBetsPlaced.ContainsKey(UsernameClaim.Value)) //bet are open, and betting list is valid
+                        if (!LobbyService.ManagedTablesObj[TableId].IsBettingListVoid(Bets) && !LobbyService.ManagedTablesObj[TableId].AllBetsPlaced.ContainsKey(UsernameClaim.Value)) //bet are open, and betting list is valid
                         {
                             //var bankrollAvailable = await _casinoGodsDbContext.Players.FirstOrDefaultAsync(u => u.username == UsernameClaim.Value);
                             //if (bankrollAvailable != null)
                             //{
-                                //if (bankrollAvailable.bankroll >= Bets.Sum()) 
-                                    Console.WriteLine(UsernameClaim.Value + " List uploaded");
-                                    TableService.ManagedTablesObj[TableId].UserInitialBetsDictionary[UsernameClaim.Value] = Bets;
-                                    TableService.ManagedTablesObj[TableId].AllBetsPlaced.TryAdd(UsernameClaim.Value, true);
-                                    string newJWT = await GlobalFunctions.RefreshTokenGlobal(jwt, redisDbLogin, redisDbJwt, _configuration);
-                                    if (newJWT == null || newJWT == "Session expired, log in again" || newJWT == "Redis data error, log in again") { await Clients.Caller.SendAsync("Disconnect", newJWT); }
-                                    await Clients.Caller.SendAsync("JwtUpdate", newJWT);
-                                    var JwtClaim = claimsIdentity.FindFirst("Jwt");
-                                    if (JwtClaim != null)
-                                    {
-                                        var newJwtClaim = new Claim(JwtClaim.Type, newJWT);
-                                        claimsIdentity.RemoveClaim(JwtClaim);
-                                        claimsIdentity.AddClaim(newJwtClaim);
-                                    }
-                                    if (TableService.ManagedTablesObj[TableId].AllBetsPlaced.Count >= TableService.UserCountAtTablesDictionary[TableId])
-                                    { TableService.ManagedTablesObj[TableId].cancellationTokenSource.Cancel(); TableService.ManagedTablesObj[TableId].BetsClosed = true; }
-                                    else
-                                    {
-                                        int playersremaining = TableService.UserCountAtTablesDictionary[TableId] - TableService.ManagedTablesObj[TableId].AllBetsPlaced.Count;
-                                        await Clients.Caller.SendAsync($"TableChatReports", "Your bets are sent. Waiting for " + playersremaining + " player(s) to start game immediately");
-                                    }
-                                
-                                //else Console.WriteLine("Not enough cash");
+                            //if (bankrollAvailable.bankroll >= Bets.Sum()) 
+                            Console.WriteLine(UsernameClaim.Value + " List uploaded");
+                            LobbyService.ManagedTablesObj[TableId].UserInitialBetsDictionary[UsernameClaim.Value] = Bets;
+                            LobbyService.ManagedTablesObj[TableId].AllBetsPlaced.TryAdd(UsernameClaim.Value, true);
+                            string newJWT = await GlobalFunctions.RefreshTokenGlobal(jwt, redisDbLogin, redisDbJwt, _configuration);
+                            if (newJWT == null || newJWT == "Session expired, log in again" || newJWT == "Redis data error, log in again") { await Clients.Caller.SendAsync("Disconnect", newJWT); }
+                            await Clients.Caller.SendAsync("JwtUpdate", newJWT);
+                            var JwtClaim = claimsIdentity.FindFirst("Jwt");
+                            if (JwtClaim != null)
+                            {
+                                var newJwtClaim = new Claim(JwtClaim.Type, newJWT);
+                                claimsIdentity.RemoveClaim(JwtClaim);
+                                claimsIdentity.AddClaim(newJwtClaim);
+                            }
+                            if (LobbyService.ManagedTablesObj[TableId].AllBetsPlaced.Count >= LobbyService.UserCountAtTablesDictionary[TableId])
+                            { LobbyService.ManagedTablesObj[TableId].cancellationTokenSource.Cancel(); LobbyService.ManagedTablesObj[TableId].BetsClosed = true; }
+                            else
+                            {
+                                int playersremaining = LobbyService.UserCountAtTablesDictionary[TableId] - LobbyService.ManagedTablesObj[TableId].AllBetsPlaced.Count;
+                                await Clients.Caller.SendAsync($"TableChatReports", "Your bets are sent. Waiting for " + playersremaining + " player(s) to start game immediately");
+                            }
+
+                            //else Console.WriteLine("Not enough cash");
                             //}
                             //else Console.WriteLine("Bankroll from Database error");
                         }
-                        else if (!TableService.ManagedTablesObj[TableId].IsBettingListVoid(Bets) && TableService.ManagedTablesObj[TableId].AllBetsPlaced.ContainsKey(UsernameClaim.Value))
-                        { Console.WriteLine("Bets already placed");}
-                        else Console.WriteLine("Empty List was sent to me");                       
+                        else if (!LobbyService.ManagedTablesObj[TableId].IsBettingListVoid(Bets) && LobbyService.ManagedTablesObj[TableId].AllBetsPlaced.ContainsKey(UsernameClaim.Value))
+                        { Console.WriteLine("Bets already placed"); }
+                        else Console.WriteLine("Empty List was sent to me");
                     }
                     else
                     {
-                        if (TableService.ManagedTablesObj[TableId].ClosedBetsToken == ClosedBetsToken)
+                        if (LobbyService.ManagedTablesObj[TableId].ClosedBetsToken == ClosedBetsToken)
                         {
-                            if (!TableService.ManagedTablesObj[TableId].IsBettingListVoid(Bets) && !TableService.ManagedTablesObj[TableId].AllBetsPlaced.ContainsKey(UsernameClaim.Value)) //bets are closed 
+                            if (!LobbyService.ManagedTablesObj[TableId].IsBettingListVoid(Bets) && !LobbyService.ManagedTablesObj[TableId].AllBetsPlaced.ContainsKey(UsernameClaim.Value)) //bets are closed 
                             {
                                 Console.WriteLine(UsernameClaim.Value + "List automatically uploaded");
 
-                                TableService.ManagedTablesObj[TableId].UserInitialBetsDictionary[UsernameClaim.Value] = Bets;
+                                LobbyService.ManagedTablesObj[TableId].UserInitialBetsDictionary[UsernameClaim.Value] = Bets;
                                 string newJWT = await GlobalFunctions.RefreshTokenGlobal(jwt, redisDbLogin, redisDbJwt, _configuration);
                                 if (newJWT == null || newJWT == "Session expired, log in again" || newJWT == "Redis data error, log in again") { await Clients.Caller.SendAsync("Disconnect", newJWT); }
                                 await Clients.Caller.SendAsync("JwtUpdate", newJWT);
@@ -370,15 +401,18 @@ namespace CasinoGodsAPI.TablesModel
                                     claimsIdentity.AddClaim(newJwtClaim);
                                 }
                             }
-                            else if (!TableService.ManagedTablesObj[TableId].IsBettingListVoid(Bets) && TableService.ManagedTablesObj[TableId].AllBetsPlaced.ContainsKey(UsernameClaim.Value))
+                            else if (!LobbyService.ManagedTablesObj[TableId].IsBettingListVoid(Bets) && LobbyService.ManagedTablesObj[TableId].AllBetsPlaced.ContainsKey(UsernameClaim.Value))
                             { Console.WriteLine("Bets already placed"); }
-                            else { Console.WriteLine("Empty List"); TableService.ManagedTablesObj[TableId].UserInitialBetsDictionary.TryAdd(UsernameClaim.Value, Enumerable.Repeat(0, 157).ToList()); }
+                            else { Console.WriteLine("Empty List"); LobbyService.ManagedTablesObj[TableId].UserInitialBetsDictionary.TryAdd(UsernameClaim.Value, Enumerable.Repeat(0, 157).ToList()); }
                         }
                         else { Console.WriteLine("Wrong ClosedBets Token"); }
                     }
                 }
             }
         }
+        public async Task<bool> IsBettingEnabled() { return await Task.FromResult(true); }
+        public async Task ToggleBetting(bool enabled, string TableId) { await Clients.Group(TableId).SendAsync("ToggleBetting", enabled); }
+        //
     }
     public class BacarratLobby :  LobbyHub
     {

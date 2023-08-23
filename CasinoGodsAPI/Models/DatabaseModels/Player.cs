@@ -55,24 +55,20 @@ namespace CasinoGodsAPI.Models.DatabaseModels
         }
         public string CreateToken(string uname, IConfiguration configuration)
         {
-            List<Claim> claims = new List<Claim>();
-            if (uname == "guest")
+            List<Claim> claims = new List<Claim>
             {
-                claims.Add(new Claim(ClaimTypes.Name, this.Username));
-                claims.Add(new Claim(ClaimTypes.Role, "Guest"));
-            }
-            else
-            {
-                claims.Add(new Claim(ClaimTypes.Name, this.Username));
-                claims.Add(new Claim(ClaimTypes.Role, "Player"));
-            }
+                new Claim(ClaimTypes.Name, Username),
+                new Claim(ClaimTypes.Role, uname == "guest" ? "Guest" : "Player")
+            };
 
             var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(configuration.GetSection("AppSettings:Token").Value));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
-            var token = new JwtSecurityToken(
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(5),
-                signingCredentials: credentials
+
+            var token = new JwtSecurityToken
+                (
+                    claims: claims,
+                    expires: DateTime.Now.AddMinutes(5),
+                    signingCredentials: credentials
                 );
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);
 

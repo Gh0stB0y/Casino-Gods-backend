@@ -34,14 +34,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Commands\BackgroundServices\" />
-    <Folder Include="Commands\GameServices\" />
-    <Folder Include="Commands\SignalR\" />
+    <Folder Include="Mediator\Commands\BackgroundServices\" />
     <Folder Include="Migrations\" />
     <Folder Include="Models\ControllerModels\" />
-    <Folder Include="Queries\BackgroundServices\" />
-    <Folder Include="Queries\GameServices\" />
-    <Folder Include="Queries\SignalR\" />
+    <Folder Include="Mediator\Queries\GameServices\" />
+    <Folder Include="Mediator\Queries\SignalRHubs\" />
   </ItemGroup>
 
 </Project>

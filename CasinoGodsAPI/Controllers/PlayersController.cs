@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using CasinoGodsAPI.DTOs;
 using MediatR;
-using CasinoGodsAPI.Commands.Controllers.PlayerController;
-using CasinoGodsAPI.Queries.Controllers.PlayerController;
+using CasinoGodsAPI.Mediator.Commands.Controllers.PlayerController;
+using CasinoGodsAPI.Mediator.Queries.Controllers.PlayerController;
 
 namespace CasinoGodsAPI.Controllers
 {

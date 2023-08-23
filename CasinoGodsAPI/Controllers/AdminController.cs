@@ -12,8 +12,8 @@ using System.Xml.Linq;
 using CasinoGodsAPI.Models.DatabaseModels;
 using CasinoGodsAPI.DTOs;
 using MediatR;
-using CasinoGodsAPI.Queries.Controllers.AdminController;
-using CasinoGodsAPI.Commands.Controllers.AdminController;
+using CasinoGodsAPI.Mediator.Commands.Controllers.AdminController;
+using CasinoGodsAPI.Mediator.Queries.Controllers.AdminController;
 
 namespace CasinoGodsAPI.Controllers
 {

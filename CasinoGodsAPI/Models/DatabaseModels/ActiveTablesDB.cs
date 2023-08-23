@@ -4,6 +4,9 @@ namespace CasinoGodsAPI.Models.DatabaseModels
 {
     public class ActiveTablesDB
     {
+        private ActiveTablesDB parentTable;
+        private Guid guid;
+
         [Key]
         public Guid TableInstanceId { get; set; } = new Guid();
 
@@ -17,6 +20,34 @@ namespace CasinoGodsAPI.Models.DatabaseModels
         public bool Sidebet1 { get; set; } = true;
         public bool Sidebet2 { get; set; } = true;
         public int Decks { get; set; } = 6;
+        public void AddProperties(Tables table, Guid guid)
+        {
+            TableInstanceId = Guid.NewGuid();
+            Name = table.CKname;
+            Game = table.CKGame;
+            MinBet = table.MinBet;
+            MaxBet = table.MaxBet;
+            BetTime = table.BetTime;
+            Maxseats = table.Maxseats;
+            ActionTime = table.ActionTime;
+            Sidebet1 = table.Sidebet1;
+            Sidebet2 = table.Sidebet2;
+            Decks = table.Decks;
+        }
 
+        public void AddProperties(ActiveTablesDB parentTable, Guid guid)
+        {
+            TableInstanceId = guid;
+            Name = parentTable.Name;
+            Game = parentTable.Game;
+            MinBet = parentTable.MinBet;
+            MaxBet = parentTable.MaxBet;
+            BetTime = parentTable.BetTime;
+            Maxseats = parentTable.Maxseats;
+            ActionTime = parentTable.ActionTime;
+            Sidebet1 = parentTable.Sidebet1;
+            Sidebet2 = parentTable.Sidebet2;
+            Decks = parentTable.Decks;
+        }
     }
 }

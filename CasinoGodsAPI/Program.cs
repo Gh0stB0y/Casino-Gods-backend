@@ -4,23 +4,14 @@ using CasinoGodsAPI.TablesModel;
 using Microsoft.AspNet.SignalR;
 using Microsoft.AspNet.SignalR.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Org.BouncyCastle.Asn1.X509.Qualified;
 using StackExchange.Redis;
 using Swashbuckle.AspNetCore.Filters;
-using System.Collections.Concurrent;
 using System.Text;
-using Microsoft.AspNetCore.Hosting;
-using CasinoGodsAPI.Models;
 using System.Reflection;
-using CasinoGodsAPI;
-using MediatR;
-using CasinoGodsAPI.Handlers.Databases;
-using CasinoGodsAPI.Commands.Databases;
+
 
 var builder = WebApplication.CreateBuilder(args);
 

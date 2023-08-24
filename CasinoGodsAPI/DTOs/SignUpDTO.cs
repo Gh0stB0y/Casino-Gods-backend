@@ -2,70 +2,72 @@
 {
     public class SignUpDTO
     {
-        public string username { get; set; } = string.Empty;
-        public string email { get; set; } = string.Empty;
-        public DateTime birthdate { get; set; }
-        public string password { get; set; } = string.Empty;
+        public string Username { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public DateTime Birthdate { get; set; }
+        public string Password { get; set; } = string.Empty;
 
 
         public static string CheckSignUpCredentials(SignUpDTO p)
         {
             string response = "";
-            if (p.password.Length < 8) response = "Password too short";
-            if (!specialLetterGood(p)) response = "Password does not contain a special character";
-            if (!passNumGood(p)) response = "Password does not contain a number";
-            if (!checkLowecase(p)) response = "Password does not contain lowercase letter";
-            if (!checkUppercase(p)) response = "Password does not contain upercase letter";
+            if (p.Password.Length < 8) response = "Password too short";
+            if (!SpecialLetterGood(p)) response = "Password does not contain a special character";
+            if (!PassNumGood(p)) response = "Password does not contain a number";
+            if (!CheckLowecase(p)) response = "Password does not contain lowercase letter";
+            if (!CheckUppercase(p)) response = "Password does not contain upercase letter";
 
-            if (!ageGood(p)) response = "User is not an adult";
-            if (!p.email.Contains('@')) response = "Invalid email";
+            if (!AgeGood(p)) response = "User is not an adult";
+            if (!p.Email.Contains('@')) response = "Invalid email";
 
-            if (p.username.Length < 4) response = "Username too short";
+            if (p.Username.Length < 4) response = "Username too short";
 
             return response;
         }
-        private static bool ageGood(SignUpDTO p)
+        private static bool AgeGood(SignUpDTO p)
         {
-            if (p.birthdate.Year + 18 < DateTime.Today.Year) return true;
-            else if (p.birthdate.Year + 18 == DateTime.Today.Year)
+            if (p.Birthdate.Year + 18 < DateTime.Today.Year) return true;
+            else if (p.Birthdate.Year + 18 == DateTime.Today.Year)
             {
-                if (p.birthdate.Month < DateTime.Today.Month) return true;
-                else if (p.birthdate.Month == DateTime.Today.Month)
+                if (p.Birthdate.Month < DateTime.Today.Month) return true;
+                else if (p.Birthdate.Month == DateTime.Today.Month)
                 {
-                    if (p.birthdate.Day <= DateTime.Today.Day) return true;
+                    if (p.Birthdate.Day <= DateTime.Today.Day) return true;
                     else return false;
                 }
                 else return false;
             }
             else return false;
         }
-        private static bool passNumGood(SignUpDTO p)
+        private static bool PassNumGood(SignUpDTO p)
         {
+            
             int res;
             bool numExist = false;
-            foreach (char character in p.password)
+            foreach (char character in p.Password)
             {
-                if (int.TryParse(character.ToString(), out res)) { numExist = true; break; }
+                //if (int.TryParse(character.ToString(), out res)) { numExist = true; break; }
+                if (char.IsDigit(character)) { numExist = true; break; }
             }
             return numExist;
         }
-        private static bool specialLetterGood(SignUpDTO p)
+        private static bool SpecialLetterGood(SignUpDTO p)
         {
-            return p.password.Any(ch => !char.IsLetterOrDigit(ch));
+            return p.Password.Any(ch => !char.IsLetterOrDigit(ch));
         }
-        private static bool checkUppercase(SignUpDTO p)
+        private static bool CheckUppercase(SignUpDTO p)
         {
             bool upperExist = false;
-            foreach (char character in p.password)
+            foreach (char character in p.Password)
             {
                 if (char.IsUpper(character)) { upperExist = true; break; }
             }
             return upperExist;
         }
-        private static bool checkLowecase(SignUpDTO p)
+        private static bool CheckLowecase(SignUpDTO p)
         {
             bool lowerExist = false;
-            foreach (char character in p.password)
+            foreach (char character in p.Password)
             {
                 if (char.IsLower(character)) { lowerExist = true; break; }
             }

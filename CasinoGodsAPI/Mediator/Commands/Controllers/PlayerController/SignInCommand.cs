@@ -4,5 +4,5 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CasinoGodsAPI.Mediator.Commands.Controllers.PlayerController
 {
-    public record SignInCommand(SignInDTO Player) : IRequest<IActionResult>;
+    public record SignInCommand(SignInDTO PlayerCredientials) : IRequest<IActionResult>;
 }

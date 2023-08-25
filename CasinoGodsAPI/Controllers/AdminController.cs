@@ -1,19 +1,9 @@
-﻿using System;
-using CasinoGodsAPI.Data;
-using CasinoGodsAPI.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.CookiePolicy;
-//using CasinoGodsAPI.Migrations;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using System.Xml.Linq;
-using CasinoGodsAPI.Models.DatabaseModels;
 using CasinoGodsAPI.DTOs;
 using MediatR;
 using CasinoGodsAPI.Mediator.Commands.Controllers.AdminController;
-using CasinoGodsAPI.Mediator.Queries.Controllers.AdminController;
+using CasinoGodsAPI.Mediator.Queries.Databases;
 
 namespace CasinoGodsAPI.Controllers
 {

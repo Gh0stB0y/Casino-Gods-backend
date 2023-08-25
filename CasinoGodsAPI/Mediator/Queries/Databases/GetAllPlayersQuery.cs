@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CasinoGodsAPI.Mediator.Queries.Controllers.AdminController
+namespace CasinoGodsAPI.Mediator.Queries.Databases
 {
     public record GetAllPlayersQuery() : IRequest<IActionResult>;
 }

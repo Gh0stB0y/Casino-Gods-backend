@@ -1,5 +1,5 @@
 ﻿using CasinoGodsAPI.Data;
-using CasinoGodsAPI.Mediator.Queries.Controllers.AdminController;
+using CasinoGodsAPI.Mediator.Queries.Databases;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

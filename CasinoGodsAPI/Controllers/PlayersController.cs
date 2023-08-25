@@ -2,7 +2,7 @@
 using CasinoGodsAPI.DTOs;
 using MediatR;
 using CasinoGodsAPI.Mediator.Commands.Controllers.PlayerController;
-using CasinoGodsAPI.Mediator.Queries.Controllers.PlayerController;
+using CasinoGodsAPI.Mediator.Queries.Controllers;
 
 namespace CasinoGodsAPI.Controllers
 {

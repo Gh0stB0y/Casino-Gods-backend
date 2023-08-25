@@ -1,6 +1,6 @@
 ﻿using CasinoGodsAPI.Data;
 using CasinoGodsAPI.DTOs;
-using CasinoGodsAPI.Mediator.Queries.Controllers.PlayerController;
+using CasinoGodsAPI.Mediator.Queries.Controllers;
 using CasinoGodsAPI.Models;
 using CasinoGodsAPI.Services;
 using MediatR;

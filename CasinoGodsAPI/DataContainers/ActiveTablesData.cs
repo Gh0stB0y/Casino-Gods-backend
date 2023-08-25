@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using Microsoft.AspNetCore.SignalR;
 using CasinoGodsAPI.Services;
 using CasinoGodsAPI.Models;
+using MediatR;
 
 namespace CasinoGodsAPI.Data_Containers
 {
@@ -13,9 +14,10 @@ namespace CasinoGodsAPI.Data_Containers
         public static ConcurrentDictionary<string, string> UserGroupDictionary = new();
         public static ConcurrentDictionary<string, HubCallerContext> UserContextDictionary = new();
         public static List<ActiveTablesDB> ActiveTables = new();
-
+        
         public static void AddNewTableConditions(string TableId)
         {
+            
             var ParentTable = ActiveTables.SingleOrDefault(t => t.TableInstanceId.ToString() == TableId);
             if (ParentTable != null)
             {

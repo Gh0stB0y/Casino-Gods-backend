@@ -21,11 +21,14 @@ namespace CasinoGodsAPI.Mediator.Handlers.Databases
             var newObj = request.NewObj;
             if (oldObj != null && tableInDb != null && dbContext != null && newObj != null)
             {
-                var objFromDb = await tableInDb.SingleOrDefaultAsync(o => o == oldObj);
+                var objFromDb = await tableInDb.SingleOrDefaultAsync(o => o == oldObj, cancellationToken: cancellationToken);
                 if (objFromDb != null)
                 {
-                    objFromDb = newObj;
-                    await dbContext.SaveChangesAsync();
+                    tableInDb.Remove(objFromDb);
+                    tableInDb.Add(newObj);
+
+                    //objFromDb = newObj;
+                    await dbContext.SaveChangesAsync(cancellationToken);
                     _logger.LogInformation("Object updated");
                     return newObj;
                 }

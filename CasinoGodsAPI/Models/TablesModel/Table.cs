@@ -49,9 +49,9 @@ namespace CasinoGodsAPI.Models
         private readonly IServiceProvider _serviceProvider;
 
         //SEATS RELATED FIELDS
-        private ConcurrentDictionary<int, string> UsersAtSeat = new ConcurrentDictionary<int, string>();//represents which user is sitting at specific seat NOT USED IN ROULETTE,DRAGON TIGER, WAR
-        private ConcurrentDictionary<int, List<int>> BetAtSeat = new ConcurrentDictionary<int, List<int>>();//represent how much is bet on specific seat NOT USED IN ROULETTE,DRAGON TIGER, WAR
-        private ConcurrentDictionary<int, bool> SeatActiveInCurrentGame = new ConcurrentDictionary<int, bool>();//represent which seats are taken NOT USED IN ROULETTE,DRAGON TIGER, WAR
+        public ConcurrentDictionary<int, string> UsersAtSeat = new ConcurrentDictionary<int, string>();//represents which user is sitting at specific seat NOT USED IN ROULETTE,DRAGON TIGER, WAR
+        public ConcurrentDictionary<int, List<int>> BetAtSeat = new ConcurrentDictionary<int, List<int>>();//represent how much is bet on specific seat NOT USED IN ROULETTE,DRAGON TIGER, WAR
+        public ConcurrentDictionary<int, bool> SeatActiveInCurrentGame = new ConcurrentDictionary<int, bool>();//represent which seats are taken NOT USED IN ROULETTE,DRAGON TIGER, WAR
         //
         //CARDS RELATED FIELDS
         private Stack<int> ShuffledDeck = new Stack<int>();
@@ -63,7 +63,7 @@ namespace CasinoGodsAPI.Models
         public ConcurrentDictionary<string,List<int>>UserInitialBetsDictionary=new ConcurrentDictionary<string, List<int>>(); //represent list sent by users, those list are one before converting
         public ConcurrentDictionary<string, List<int>> UserFinalBets = new ConcurrentDictionary<string, List<int>>();//represents final betting list, used in roulette games index from 0 to 36
         public ConcurrentDictionary<string, int> UserWinnings = new ConcurrentDictionary<string, int>(); //represents how much user won during a single game
-        private ConcurrentDictionary<string, int> SeatsTakenByUser = new ConcurrentDictionary<string, int>();//represent how many seats are taken by a specific user NOT USED IN ROULETTE,DRAGON TIGER, WAR
+        public ConcurrentDictionary<string, int> SeatsTakenByUser = new ConcurrentDictionary<string, int>();//represent how many seats are taken by a specific user NOT USED IN ROULETTE,DRAGON TIGER, WAR
         //
         
         public PlayingTable(string TableId,string Game, IServiceProvider serviceProvider)

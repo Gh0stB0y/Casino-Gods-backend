@@ -11,6 +11,8 @@ using StackExchange.Redis;
 using Swashbuckle.AspNetCore.Filters;
 using System.Text;
 using System.Reflection;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Identity.Web;
 
 
 var builder = WebApplication.CreateBuilder(args);

@@ -4,7 +4,7 @@
   "parameters": {
     "resourceGroupName": {
       "type": "string",
-      "defaultValue": "ServerResources",
+      "defaultValue": "casinogodsserver_group",
       "metadata": {
         "_parameterType": "resourceGroup",
         "description": "Nazwa grupy zasobów dla zasobu. Zaleca się umieszczanie zasobów w tej samej grupie zasobów, aby ułatwić śledzenie."
@@ -36,7 +36,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "name": "[concat(parameters('resourceGroupName'), 'Deployment', uniqueString(concat('CasinoGodsSignalR', subscription().subscriptionId)))]",
+      "name": "[concat(parameters('resourceGroupName'), 'Deployment', uniqueString(concat('CasinoGodsAPIcache', subscription().subscriptionId)))]",
       "resourceGroup": "[parameters('resourceGroupName')]",
       "apiVersion": "2019-10-01",
       "dependsOn": [
@@ -49,16 +49,17 @@
           "contentVersion": "1.0.0.0",
           "resources": [
             {
-              "sku": {
-                "name": "Free_F1",
-                "tier": "Free",
-                "size": "F1",
-                "capacity": 1
-              },
               "location": "[parameters('resourceLocation')]",
-              "name": "CasinoGodsSignalR",
-              "type": "Microsoft.SignalRService/SignalR",
-              "apiVersion": "2018-10-01"
+              "name": "CasinoGodsAPIcache",
+              "type": "Microsoft.Cache/Redis",
+              "properties": {
+                "sku": {
+                  "name": "Basic",
+                  "family": "C",
+                  "capacity": 0
+                }
+              },
+              "apiVersion": "2017-02-01"
             }
           ]
         }
@@ -66,6 +67,6 @@
     }
   ],
   "metadata": {
-    "_dependencyType": "signalr.azure"
+    "_dependencyType": "redis.azure"
   }
 }

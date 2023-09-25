@@ -1,0 +1,31 @@
+{
+  "dependencies": {
+    "signalr1": {
+      "secretStore": "AzureAppSettings",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.SignalRService/SignalR/CasinoGodsAPI",
+      "type": "signalr.azure",
+      "connectionId": "Azure:SignalR:ConnectionString",
+      "dynamicId": null
+    },
+    "mssql1": {
+      "secretStore": "AzureAppSettings",
+      "resourceId": null,
+      "type": "mssql.onprem",
+      "connectionId": "ConnectionStrings:FullStackConnectionString"
+    },
+    "identityapp2": {
+      "type": "identityapp.default"
+    },
+    "apis2": {
+      "apiEndpoint": "https://casinogodsapiapi.azure-api.net/",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.ApiManagement/service/CasinoGodsAPIapi/apis/CasinoGodsAPI",
+      "type": "apis.azure"
+    },
+    "redis1": {
+      "secretStore": "AzureAppSettings",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Cache/Redis/CasinoGodsAPIcache",
+      "type": "redis.azure",
+      "connectionId": "ConnectionStrings:RedisConnection"
+    }
+  }
+}

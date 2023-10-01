@@ -13,7 +13,10 @@ using System.Text;
 using System.Reflection;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Identity.Web;
-
+using CasinoGodsAPI.Migrations;
+using CasinoGodsAPI.Models.DatabaseModels;
+using CasinoGodsAPI.Mediator.Handlers.Databases;
+using CasinoGodsAPI.Databases;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -78,7 +81,7 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>
     {
-        builder.WithOrigins("http://localhost:4200")
+        builder.WithOrigins("https://casinogodsonline.azurewebsites.net")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials(); // Allow sending credentials (e.g., cookies) with the request
@@ -110,19 +113,22 @@ app.UseEndpoints(endpoints => {
     endpoints.MapHub<DragonTigerLobby>("/DragonTigerLobby");
     endpoints.MapHub<WarLobby>("/WarLobby");
 });
-Init(app.Services);
+await Init(app.Services);
 
 app.Run();
 
-void Init(IServiceProvider serviceProvider)
+async Task Init(IServiceProvider serviceProvider)
 {
     using (var scope = serviceProvider.CreateScope())
     {
         var casinoGodsDbContext = scope.ServiceProvider.GetRequiredService<CasinoGodsDbContext>();
-
+        await casinoGodsDbContext.Database.MigrateAsync();
         var recordsToDelete = casinoGodsDbContext.ActiveTables.ToList();
-        casinoGodsDbContext.ActiveTables.RemoveRange(recordsToDelete);
-        casinoGodsDbContext.SaveChanges();
+            casinoGodsDbContext.ActiveTables.RemoveRange(recordsToDelete);
+        var recordsToAdd = InitialTables.AddInitialTables();
+            await casinoGodsDbContext.ActiveTables.AddRangeAsync(recordsToAdd);
+        await casinoGodsDbContext.SaveChangesAsync();
+
     }
 }
 

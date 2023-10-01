@@ -23,9 +23,9 @@
     },
     "redis1": {
       "secretStore": "AzureAppSettings",
-      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Cache/Redis/CasinoGodsAPIcache",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Cache/Redis/CasinoGodsRedis",
       "type": "redis.azure",
-      "connectionId": "ConnectionStrings:RedisConnection"
+      "connectionId": "CacheConnection"
     }
   }
 }

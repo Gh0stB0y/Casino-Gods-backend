@@ -4,7 +4,7 @@
   "parameters": {
     "resourceGroupName": {
       "type": "string",
-      "defaultValue": "casinogodsserver_group",
+      "defaultValue": "DbResources",
       "metadata": {
         "_parameterType": "resourceGroup",
         "description": "Nazwa grupy zasobów dla zasobu. Zaleca się umieszczanie zasobów w tej samej grupie zasobów, aby ułatwić śledzenie."
@@ -36,7 +36,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "name": "[concat(parameters('resourceGroupName'), 'Deployment', uniqueString(concat('CasinoGodsAPIcache', subscription().subscriptionId)))]",
+      "name": "[concat(parameters('resourceGroupName'), 'Deployment', uniqueString(concat('CasinoGodsRedis', subscription().subscriptionId)))]",
       "resourceGroup": "[parameters('resourceGroupName')]",
       "apiVersion": "2019-10-01",
       "dependsOn": [
@@ -50,11 +50,11 @@
           "resources": [
             {
               "location": "[parameters('resourceLocation')]",
-              "name": "CasinoGodsAPIcache",
+              "name": "CasinoGodsRedis",
               "type": "Microsoft.Cache/Redis",
               "properties": {
                 "sku": {
-                  "name": "Basic",
+                  "name": "Standard",
                   "family": "C",
                   "capacity": 0
                 }

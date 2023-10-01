@@ -31,7 +31,7 @@ namespace CasinoGodsAPI.TablesModel
         }        
         public override async Task OnConnectedAsync()
         {
-            await base.OnConnectedAsync();
+            //await base.OnConnectedAsync();
             var query = Context.GetHttpContext().Request.Query;
             string paramJWT = query["param1"].ToString();
             string paramUName = query["param2"].ToString();            
@@ -51,6 +51,7 @@ namespace CasinoGodsAPI.TablesModel
                 ActiveTablesData.UserContextDictionary.TryAdd(paramUName, Context);
                 await Clients.Others.SendAsync("ChatReports", paramUName + " has entered the chat");
                 await Clients.Caller.SendAsync("JwtUpdate", newJWT);
+                await base.OnConnectedAsync();
                 //
             }
         }
